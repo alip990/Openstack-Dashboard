@@ -4,10 +4,20 @@ FROM python:3
 
 # ENV PYTHONUNBUFFERED=1
 
-WORKDIR /code
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH=$PATH:/home/application/.local/bin
 
-COPY requirements.txt /code/
+RUN useradd application
 
-RUN pip install -r requirements.txt
+WORKDIR /home/application
+
+RUN chown -R application:application /home/application
+
+USER application
+
+COPY --chown=application:application . .
+
+RUN pip install -r requirements.txt  --user
 
 # COPY . /code/

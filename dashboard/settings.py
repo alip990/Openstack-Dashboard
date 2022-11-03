@@ -39,14 +39,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    # 'corsheaders',
+    'corsheaders',
     'users'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # 'corseheaders.middleware.CorseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -116,7 +116,7 @@ REST_FRAMEWORK = {
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-a=2
+a = 2
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -135,6 +135,10 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = 'users.User'
 ALLOWED_HOSTS = ['*']
 
+# CORS_ALLOWED_ORIGINS = '*'
+
 CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
