@@ -6,7 +6,7 @@ FROM python:3
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PATH=$PATH:/home/application/.local/bin
+# ENV PATH=$PATH:/home/application/.local/bin
 
 RUN useradd application
 

@@ -27,8 +27,9 @@ SECRET_KEY = 'm%f)zrw23aoars^6-g=poe%9h-(wxbk9@wvj)8(#6f2-8%_88h'
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
-
+OPENSTACK_URL = os.environ.get('OPENSTACK_URL')
+OPENSTACK_ADMIN_USERNAME = os.environ.get('OPENSTACK_ADMIN_USERNAME')
+OPENSTACK_ADMIN_PASSWORD = os.environ.get('OPENSTACK_ADMIN_PASSWORD')
 # Application definition
 
 INSTALLED_APPS = [
@@ -71,6 +72,8 @@ TEMPLATES = [
         },
     },
 ]
+TEMPLATE_LOADERS = ('django.template.loaders.filesystem.Loader',
+                    'django.template.loaders.app_directories.Loader',     'django.template.loaders.eggs.Loader', )
 
 WSGI_APPLICATION = 'dashboard.wsgi.application'
 
@@ -82,11 +85,11 @@ WSGI_APPLICATION = 'dashboard.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['POSTGRES_DB'],
-        'USER': os.environ['POSTGRES_USER'],
-        'PASSWORD': os.environ['POSTGRES_PASSWORD'],
-        'HOST': os.environ['POSTGRES_HOST'],
-        'PORT': os.environ['POSTGRES_PORT'] or 5432,
+        'NAME': os.environ.get('POSTGRES_DB'),
+        'USER': os.environ.get('POSTGRES_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_HOST'),
+        'PORT': os.environ.get('POSTGRES_PORT', 5432),
     }
 }
 
@@ -109,6 +112,10 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        # 'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
@@ -130,6 +137,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'statics')
 
 
 AUTH_USER_MODEL = 'users.User'

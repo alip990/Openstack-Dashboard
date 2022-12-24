@@ -1,0 +1,13 @@
+{% extends 'admin/change_form.html' %} {% load i18n %} 
+
+{% block submit_buttons_bottom %} {{ block.super }}
+
+<fieldset class="module aligned">
+  <h2>افزودن به openstack</h2>
+  <!-- <div class="form-row field-{{ course.title }}"> -->
+  <button type="submit" class="like" name="_create_openstack_user" value="" , >
+    افزودن
+  </button>
+  <!-- </div> -->
+</fieldset>
+{% endblock submit_buttons_bottom %}
