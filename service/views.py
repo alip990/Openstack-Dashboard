@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .api.keystone import get_admin_keystone_client, get_user_project_list, get_user_session
 from .api.glance import get_image_list
+from .api.nova import get_flavor_list
 # Create your views here.
 
 
@@ -50,3 +51,13 @@ class ImageView(APIView):
             "photo": image.photo,
         } for image in images]
         return JsonResponse({"data": d}, safe=False)
+
+
+class FlavorView(APIView):
+    def get(self, request):
+        session = get_user_session('', '')
+        flavors = get_flavor_list(session)
+        print(flavors)
+        print('flavors')
+
+        return JsonResponse({'data': flavors}, safe=False)
