@@ -1,13 +1,15 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-
+from rest_framework.serializers import ValidationError
+import json
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .api.keystone import get_admin_keystone_client, get_user_project_list, get_user_session
 from .api.glance import get_image_list
-from .api.nova import get_flavor_list
+from .api.nova import get_flavor_list, get_keypair_list, create_keypair
+from .serializers import KeypairSerializer
 # Create your views here.
 
 
@@ -61,3 +63,23 @@ class FlavorView(APIView):
         print('flavors')
 
         return JsonResponse({'data': flavors}, safe=False)
+
+
+class KeypairView(APIView):
+    def get(self, request):
+        session = get_user_session('', '')
+        keypairs = get_keypair_list(session=session)
+        print('keypair', keypairs)
+        return JsonResponse({'data': keypairs}, safe=False)
+
+    def post(self, request):
+        k = KeypairSerializer(data=request.data)
+        if k.is_valid():
+            print('is valid')
+            session = get_user_session('', '')
+            
+            create_keypair(k.validated_data.get('name'),
+                           k.validated_data.get('public_key'), session)
+        else:
+            raise ValidationError(k.errors)
+        return Response('ali')

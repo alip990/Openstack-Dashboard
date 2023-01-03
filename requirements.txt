@@ -48,3 +48,5 @@ urllib3==1.26.13
 warlock==2.0.1
 wcwidth==0.2.5
 wrapt==1.14.1
+
+python-novaclient==18.1.0
