@@ -7,6 +7,7 @@ from users.serializer import UserSerializer
 # Create your views here.
 from rest_framework.response import Response
 import jwt
+from dashboard.settings import SECRET_KEY
 import datetime
 
 
@@ -30,14 +31,14 @@ class LoginView(APIView):
         if not user.check_password(password):
             raise AuthenticationFailed('Incorrect Password !')
 
-        payload = {
+        payload ={
             'id': user.id,
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=60)
         }
-
+ 
         token = jwt.encode(payload, 'secret', )
 
         response = Response()

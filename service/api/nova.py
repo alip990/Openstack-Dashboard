@@ -1,9 +1,12 @@
-from novaclient import client
+from novaclient.client import Client as nova_client
 from rest_framework.serializers import ValidationError
+from .neutron import create_router, create_network, get_project_default_network
+from glanceclient import Client as glance_client
+from .glance import get_image_by_id
 
 
 def get_flavor_list(session):
-    nova = client.Client('2', session=session)
+    nova = nova_client('2', session=session)
     flavors = nova.flavors.list()
     return [{
         "id": flavor.id,
@@ -14,8 +17,14 @@ def get_flavor_list(session):
     } for flavor in flavors]
 
 
+def get_flavor_by_id(id, session):
+    nova = nova_client('2', session=session)
+    flavor = nova.flavors.get(id)
+    return flavor
+
+
 def get_keypair_list(session):
-    nova = client.Client('2', session=session)
+    nova = nova_client('2', session=session)
     keypairs = nova.keypairs.list()
     return [{
         "id": keypair.id,
@@ -25,7 +34,7 @@ def get_keypair_list(session):
 
 
 def create_keypair(name, public_key, session):
-    nova = client.Client('2', session=session)
+    nova = nova_client('2', session=session)
     try:
         nova.keypairs.create(name=name, public_key=public_key)
     except Exception as e:
@@ -39,5 +48,45 @@ def create_keypair(name, public_key, session):
         raise ValidationError(e.message)
 
 
-def update_keypair(name, public_key):
-    pass
+def create_server(name, flavor_id, image_id, keypair_name, session):
+    try:
+        nova = nova_client('2', session=session)
+        # flavor = get_flavor_by_id(1, session)
+        glance = glance_client('2', session=session)
+        image = glance.images.get(image_id)
+        network = get_project_default_network(session)
+        nics = [{'net-id': network['id']}]
+        instance = nova.servers.create(name=name, image=image,
+                                       flavor=flavor_id, key_name=keypair_name, nics=nics)
+        return instance
+    except Exception as e:
+        if hasattr(e, 'code') and e.code == 404:
+            print(e)
+            raise ValidationError('object not found')
+        print(e)
+        raise ValidationError('object not found')
+
+
+def get_server_list(session):
+    nova = nova_client('2', session=session)
+    servers = nova.servers.list(detailed=True)
+    # print('server.image', servers[0].image_id)
+    a = [{
+        "accessIPv4": server.accessIPv4,
+        "accessIPv6": server.accessIPv6,
+        "addresses": server.addresses,
+        "created": server.created,
+        "id": server.id,
+        # "image": get_image_by_id(server.image, session),
+        "image": server.image,
+        "key_name": server.key_name,
+        "metadata": server.metadata,
+        "name": server.name,
+        "networks": server.networks,
+        "project_id": server.tenant_id,
+        "status": server.status,
+        "hostId": server.hostId,
+        "flavor": server.flavor
+    } for server in servers]
+    print(a)
+    return a
