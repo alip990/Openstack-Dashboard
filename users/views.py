@@ -3,7 +3,7 @@ from urllib import response
 from rest_framework.views import APIView
 from users.models import User
 from rest_framework.exceptions import AuthenticationFailed
-from users.serializer import UserSerializer
+from users.serializer import UserSerializer, LoginSerializer
 # Create your views here.
 from rest_framework.response import Response
 import jwt
@@ -21,32 +21,37 @@ class RegisterView(APIView):
 
 class LoginView(APIView):
     def post(self, request):
-        email = request.data['email']
-        password = request.data['password']
-        user = User.objects.filter(email=email).first()
+        data = LoginSerializer(data=request.data)
+        if data.is_valid():
+            email = data.validated_data['email']
+            password = data.validated_data['password']
+            user = User.objects.filter(email=email).first()
+            if user is None:
+                raise AuthenticationFailed('User not found!')
 
-        if user is None:
-            raise AuthenticationFailed('User not found!')
+            if not user.check_password(password):
+                raise AuthenticationFailed('Incorrect Password !')
 
-        if not user.check_password(password):
-            raise AuthenticationFailed('Incorrect Password !')
+            payload = {
+                'user_id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=60)
+            }
 
-        payload ={
-            'id': user.id,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=60)
-        }
- 
-        token = jwt.encode(payload, 'secret', )
+            token = jwt.encode(payload, SECRET_KEY,)
 
-        response = Response()
+            response = Response()
 
-        response.set_cookie(key='Authorization', value=token,
-                            httponly=True, expires=None)
+            response.set_cookie(key='Authorization', value=token,
+                                httponly=True, expires=None)
 
-        response.data = {
-            "token": token
-        }
-        return Response(user)
+            response.data = {
+                "token": token,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "has_access": True if user.openstack_username else False
+            }
+            return response

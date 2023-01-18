@@ -13,6 +13,8 @@ class User(AbstractUser):
         max_length=255, null=True, blank=True)
     openstack_password = models.CharField(
         max_length=255, null=True, blank=True)
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
     username = None
 
     USERNAME_FIELD = 'email'
