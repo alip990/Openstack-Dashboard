@@ -49,7 +49,7 @@ class FlavorView(APIView):
     # permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = User.objects.get(email=request.user)
+        # user = User.objects.get(email=request.user)
         session = get_admin_session()
         flavors = get_flavor_list(session)
         print(flavors)
