@@ -20,7 +20,13 @@ def get_flavor_list(session):
 def get_flavor_by_id(id, session):
     nova = nova_client('2', session=session)
     flavor = nova.flavors.get(id)
-    return flavor
+    return {
+        "id": flavor.id,
+        'cpu': {"size": flavor.vcpus, 'unit': 'core'},
+        'ram': {"size": flavor.ram, 'unit': 'mb'},
+        'name': flavor.name,
+        'disk': {"size": flavor.disk, 'unit': 'Gb'}
+    }
 
 
 def get_keypair_list(session):
@@ -71,14 +77,15 @@ def get_server_list(session):
     nova = nova_client('2', session=session)
     servers = nova.servers.list(detailed=True)
     # print('server.image', servers[0].image_id)
+    print('------------------',
+          get_image_by_id(servers[0].image['id'], session))
     a = [{
         "accessIPv4": server.accessIPv4,
         "accessIPv6": server.accessIPv6,
         "addresses": server.addresses,
         "created": server.created,
         "id": server.id,
-        # "image": get_image_by_id(server.image, session),
-        "image": server.image,
+        "image": get_image_by_id(server.image['id'], session),
         "key_name": server.key_name,
         "metadata": server.metadata,
         "name": server.name,
@@ -86,7 +93,7 @@ def get_server_list(session):
         "project_id": server.tenant_id,
         "status": server.status,
         "hostId": server.hostId,
-        "flavor": server.flavor
+        "flavor": get_flavor_by_id(server.flavor['id'], session)
     } for server in servers]
     print(a)
     return a
