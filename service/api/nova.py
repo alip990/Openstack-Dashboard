@@ -13,7 +13,13 @@ def get_flavor_list(session):
         'cpu': {"size": flavor.vcpus, 'unit': 'core'},
         'ram': {"size": flavor.ram, 'unit': 'mb'},
         'name': flavor.name,
-        'disk': {"size": flavor.disk, 'unit': 'Gb'}
+        'disk': {"size": flavor.disk, 'unit': 'Gb'},
+        "ratings": {
+            "monthly": 379929600,
+            "daily": 12664320,
+            "hourly": 527680
+        }
+
     } for flavor in flavors]
 
 
@@ -25,7 +31,12 @@ def get_flavor_by_id(id, session):
         'cpu': {"size": flavor.vcpus, 'unit': 'core'},
         'ram': {"size": flavor.ram, 'unit': 'mb'},
         'name': flavor.name,
-        'disk': {"size": flavor.disk, 'unit': 'Gb'}
+        'disk': {"size": flavor.disk, 'unit': 'Gb'},
+        "ratings": {
+            "monthly": 379929600,
+            "daily": 12664320,
+            "hourly": 527680
+        }
     }
 
 

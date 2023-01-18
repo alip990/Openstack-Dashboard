@@ -46,12 +46,11 @@ class ImageView(APIView):
 
 
 class FlavorView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
-    def get(self, request, project_id):
+    def get(self, request):
         user = User.objects.get(email=request.user)
-        session = get_user_session(
-            user.openstack_username, user.openstack_password, project_id)
+        session = get_admin_session()
         flavors = get_flavor_list(session)
         print(flavors)
         print('flavors')
