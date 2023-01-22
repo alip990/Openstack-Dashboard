@@ -6,6 +6,6 @@ urlpatterns = [
     path('/project/',  ProjectView.as_view()),
     path('/image/', ImageView.as_view()),
     path('/flavor/', FlavorView.as_view()),
-    path('/<str:project_id>/keypair', KeypairView.as_view()),
-    path('/<str:project_id>/vm/', VmView.as_view())
+    path('/keypair', KeypairView.as_view()),
+    path('/vm/', VmView.as_view())
 ]

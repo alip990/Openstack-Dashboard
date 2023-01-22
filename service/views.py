@@ -61,20 +61,20 @@ class FlavorView(APIView):
 class KeypairView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, project_id):
+    def get(self, request):
         user = User.objects.get(email=request.user)
         session = get_user_session(
-            user.openstack_username, user.openstack_password, project_id)
+            user.openstack_username, user.openstack_password)
         keypairs = get_keypair_list(session=session)
         print('keypair', keypairs)
         return JsonResponse({'data': keypairs}, safe=False)
 
-    def post(self, request, project_id):
+    def post(self, request):
         k = KeypairSerializer(data=request.data)
         if k.is_valid():
             user = User.objects.get(email=request.user)
             session = get_user_session(
-                user.openstack_username, user.openstack_password, project_id)
+                user.openstack_username, user.openstack_password)
             keypair = create_keypair(k.validated_data.get('name'),
                                      k.validated_data.get('public_key'), session)
 
@@ -84,12 +84,13 @@ class KeypairView(APIView):
 
 
 class VmView(APIView):
-    def post(self, request, project_id):
+    def post(self, request):
         vm = VmSerializer(data=request.data)
         if vm.is_valid():
+
             user = User.objects.get(email=request.user)
             session = get_user_session(
-                user.openstack_username, user.openstack_password, project_id)
+                user.openstack_username, user.openstack_password, vm.validated_data.get('project_id'),)
             server = create_server(vm.validated_data.get('name'),
                                    vm.validated_data.get('flavor_id'),
                                    vm.validated_data.get('image_id'),
@@ -100,8 +101,9 @@ class VmView(APIView):
         else:
             raise ValidationError(vm.errors)
 
-    def get(self, request, project_id):
+    def get(self, request):
         user = User.objects.get(email=request.user)
+        project_id = request.GET.get('project_id', None)
         session = get_user_session(
             user.openstack_username, user.openstack_password, project_id)
         vms = get_server_list(session)

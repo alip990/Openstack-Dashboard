@@ -27,10 +27,10 @@ def get_admin_session():
     return sess
 
 
-def get_user_session(username, password, project_id):
+def get_user_session(username, password, project_id=None):
 
     auth = v3.Password(auth_url=OPENSTACK_URL, username=username,
-                       password=password, project_name="admin", project_id=project_id,
+                       password=password, project_id=project_id,
                        user_domain_id="default", project_domain_id="default")
 
     sess = session.Session(auth=auth)
@@ -49,8 +49,8 @@ def get_user_keystone_client(username, password):
 
 def get_user_project_list(username):
     keystone_admin_client = get_admin_keystone_client()
-    user = keystone_admin_client.users.list(name = username)[0]
-    projects = keystone_admin_client.projects.list(user =user.id)
+    user = keystone_admin_client.users.list(name=username)[0]
+    projects = keystone_admin_client.projects.list(user=user.id)
     return [{
             "description": project.description,
             "id": project.id,
@@ -58,24 +58,26 @@ def get_user_project_list(username):
             } for project in projects]
 
 
-def create_openstack_user(email, admin_client):
+def create_openstack_user(email, admin_client, default_project=None):
     # openstack_username = uuid.uuid4().hex[:10]
     openstack_password = uuid.uuid4().hex[:15]
     user = admin_client.users.create(name=email, email=email,
                                      password=openstack_password,
-                                     domain='default')
+                                     domain='default', default_project=default_project)
     return {'openstack_username': email,
             'openstack_password': openstack_password,
             'openstack_user_id': user.id}
 
 
-def create_project(name: str, username: str, description: str):
+def create_project(name: str, username: str, description: str, user=None):
     """
     create project and assign user member to it
     """
     try:
+        if not user:
+            user = user = client.users.list(name=username)[0]
+
         client = get_admin_keystone_client()
-        user = client.users.list(name=username)[0]
         project = client.projects.create(
             name=username+'_'+name, description=description, domain='default', enabled=True)
         role = client.roles.list(name='member')[0]
@@ -107,11 +109,19 @@ def openstack_user_init(email):
     print('founded_user ', founded_user)
     if founded_user:
         raise Exception('email was already exists in openstack')
-    user = create_openstack_user(email, admin_client)
-    print('openstack user create ', user['openstack_user_id'])
-    project = create_project(
-        'default', user['openstack_username'], 'Default project!')
+    # project = create_project(
+    #     'default', user['openstack_username'], 'Default project!')
+    project = admin_client.projects.create(
+        name=email+'_default', description='Default project!', domain='default', enabled=True)
     print('openstack default project created ', project)
+
+    user = create_openstack_user(email, admin_client, default_project=project)
+    print('openstack user create ', user['openstack_user_id'])
+    role = admin_client.roles.list(name='member')[0]
+    admin_client.roles.grant(
+        role.id,
+        user=user['openstack_user_id'],
+        project=project.id)
     session = get_user_session(
         user['openstack_username'], user['openstack_password'], project_id=project.id)
     net_id = create_network(project_name=project.name, session=session)
