@@ -1,9 +1,12 @@
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
+from keystoneauth1 import exceptions as keystone_exceptions
 from keystoneclient.v3 import client
 from dashboard.settings import OPENSTACK_URL, OPENSTACK_ADMIN_PASSWORD, OPENSTACK_ADMIN_USERNAME
 import uuid
-from .nova import create_network, create_router
+from .neutron import create_network, create_router
+from rest_framework.serializers import ValidationError
+from rest_framework.exceptions import NotFound
 
 # 'http://172.16.2.45:5000',username="admin",password="0dNFOJeHuWne6AAeWPyCHOtPEAvU903F7XvukFG7"
 
@@ -47,6 +50,10 @@ def get_user_keystone_client(username, password):
     return keystone
 
 
+def get_keystone_client_by_session(session):
+    return client.Client(session=session)
+
+
 def get_user_project_list(username):
     keystone_admin_client = get_admin_keystone_client()
     user = keystone_admin_client.users.list(name=username)[0]
@@ -69,15 +76,15 @@ def create_openstack_user(email, admin_client, default_project=None):
             'openstack_user_id': user.id}
 
 
-def create_project(name: str, username: str, description: str, user=None):
+def create_project(name: str, username: str, description: str, password: str):
     """
     create project and assign user member to it
     """
     try:
-        if not user:
-            user = user = client.users.list(name=username)[0]
-
         client = get_admin_keystone_client()
+
+        user = client.users.list(name=username)[0]
+
         project = client.projects.create(
             name=username+'_'+name, description=description, domain='default', enabled=True)
         role = client.roles.list(name='member')[0]
@@ -85,14 +92,50 @@ def create_project(name: str, username: str, description: str, user=None):
             role.id,
             user=user.id,
             project=project.id)
+        print()
+        session = get_user_session(
+            username, password, project.id)
+
+        net_id = create_network(project_name=project.name, session=session)
+        create_router(network_id=net_id,
+                      project_name=project.name, session=session)
         return project
+    except keystone_exceptions.Conflict:
+        raise ValidationError('project with this name already exists')
+
+
+def delete_project(session, project_id):
+    try:
+        client = get_keystone_client_by_session(session)
+        project = client.projects.delete(project_id)
+        print(project)
+    except Exception as e:
+        print(e)
+
+
+def project_update(session, project, username, name=None, description=None,
+                   enabled=None,):
+    try:
+        client = get_keystone_client_by_session(session)
+        if name:
+            name = username+'_'+name
+        pr = client.projects.update(project, name=name, description=description
+                                    )
+
+        return pr
+    except keystone_exceptions.Conflict:
+        raise ValidationError('project with this name already exists')
+    except keystone_exceptions.Unauthorized:
+        raise NotFound('No project found with this Id')
+    except keystone_exceptions.NotFound:
+        raise NotFound('No project found with this Id')
     except Exception as e:
         print(e)
 
 
 def openstack_user_init(email):
     """
-    admin should verify user to access openstack
+    admin should verify user in admin_panel to give user openstack access
     for initialise user we go throw these steps:
         1- create openstack user
         2- create default project in format of f"{user_name}_default" to avoid duplicate name

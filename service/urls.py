@@ -1,9 +1,10 @@
+from django.urls import path, re_path
 from django.urls import path
-from django.urls import path
-from .views import ProjectView, ImageView, FlavorView, KeypairView, VmView
+from .views import ProjectsView, ImageView, FlavorView, KeypairView, VmView, ProjectView
 
 urlpatterns = [
-    path('/project/',  ProjectView.as_view()),
+    path('/projects/',  ProjectsView.as_view()),
+    path('/project/<str:id>',  ProjectView.as_view()),
     path('/image/', ImageView.as_view()),
     path('/flavor/', FlavorView.as_view()),
     path('/keypair', KeypairView.as_view()),
