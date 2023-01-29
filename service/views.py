@@ -163,7 +163,7 @@ class VmView(APIView):
                                    vm.validated_data.get('keypair_id'),
                                    session
                                    )
-            return JsonResponse({"success": True}, safe=False)
+            return JsonResponse({"success": True, 'virtual_machine_id': server.id}, safe=False)
         else:
             raise ValidationError(vm.errors)
 
@@ -179,6 +179,39 @@ class VmView(APIView):
             return JsonResponse({'data': [vm]}, safe=False)
         vms = get_server_list(session)
         return JsonResponse({'data': vms}, safe=False)
+
+
+class VmOperation(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        project_id = request.query_params.get('project_id', None)
+        if not project_id:
+            raise ValidationError(
+                'project_id should be provided in query param')
+        virtual_machine_id = request.query_params.get(
+            'virtual_machine_id', None)
+        if not virtual_machine_id:
+            raise ValidationError(
+                'virtual_machine_id should be provided in query param')
+
+        user = User.objects.get(email=request.user)
+        session = get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+
+        operation = request.data.get('operation', None)
+        operations = {
+            'stop': nova.server_stop,
+            'start': nova.server_start,
+            'pause': nova.server_pause,
+            'unpause': nova.server_unpause,
+            'suspend': nova.server_suspend,
+            'resume': nova.server_resume,
+            'hard_reboot': lambda r, s: nova.server_reboot(r, s, False),
+            'soft_reboot': lambda r, s: nova.server_reboot(r, s, True),
+        }
+        operations[operation](session, virtual_machine_id)
+        return Response(status=201)
 
 
 class VmSecurityGroupView(APIView):

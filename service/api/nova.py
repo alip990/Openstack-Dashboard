@@ -3,11 +3,45 @@ from rest_framework.serializers import ValidationError
 from .neutron import  get_project_default_network
 from glanceclient import Client as glance_client
 from .glance import get_image_by_id
+from novaclient.v2 import instance_action as nova_instance_action
+from novaclient.v2 import servers as nova_servers
 
 from service.api import _nova
 get_microversion = _nova.get_microversion
 server_get = _nova.server_get
 Server = _nova.Server
+
+
+def server_pause(session, instance_id):
+    _nova.novaclient(session).servers.pause(instance_id)
+
+
+def server_unpause(session, instance_id):
+    _nova.novaclient(session).servers.unpause(instance_id)
+
+
+def server_suspend(session, instance_id):
+    _nova.novaclient(session).servers.suspend(instance_id)
+
+
+def server_resume(session, instance_id):
+    _nova.novaclient(session).servers.resume(instance_id)
+
+
+def server_start(session, instance_id):
+    _nova.novaclient(session).servers.start(instance_id)
+
+
+def server_stop(session, instance_id):
+    _nova.novaclient(session).servers.stop(instance_id)
+
+
+def server_reboot(session, instance_id, soft_reboot=False):
+    hardness = nova_servers.REBOOT_HARD
+    if soft_reboot:
+        hardness = nova_servers.REBOOT_SOFT
+    _nova.novaclient(session).servers.reboot(instance_id, hardness)
+
 
 
 def update_pagination(entities, page_size, marker, reversed_order=False):
