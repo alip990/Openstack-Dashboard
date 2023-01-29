@@ -10,7 +10,7 @@ from service.api import keystone, nova, neutron
 from .api.keystone import get_admin_keystone_client, get_user_project_list, get_user_session, create_project, get_admin_session
 from .api.glance import get_image_list
 from .api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info
-from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer
+from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer, SecurityGroupRuleSerializer
 # Create your views here.
 from users.models import User
 
@@ -210,6 +210,7 @@ def serialize_security_group(sg):
 
 
 class SecurityGroupsView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         project_id = request.GET.get('project_id', None)
@@ -263,15 +264,44 @@ class SecurityGroupsView(APIView):
         description = request.POST.get('description', None)
         user = User.objects.get(email=request.user)
         session = get_user_session(
-            user.openstack_username, user.openstack_password)
+            user.openstack_username, user.openstack_password, project_id=project_id)
         sg_manager = neutron.SecurityGroupManager(session)
         sg = sg_manager.update(security_id, name, desc=description)
         return JsonResponse({"data": sg.to_dict()}, safe=False)
 
 
 class SecurityGroupRuleView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request):
-        pass
+        project_id = request.query_params.get('project_id', None)
+        rule_id = request.query_params.get('rule_id', None)
+        if not project_id or not rule_id:
+            raise ValidationError(
+                'project_id and security_id should be provided in query params ')
+        user = User.objects.get(email=request.user)
+        session = get_user_session(
+            user.openstack_username, user.openstack_password, project_id=project_id)
+        sg_manager = neutron.SecurityGroupManager(session)
+        sg_manager.rule_delete(rule_id)
+        return Response(status=201)
 
     def post(self, request):
-        pass
+        rule = SecurityGroupRuleSerializer(data=request.data)
+        if rule.is_valid():
+            user = User.objects.get(email=request.user)
+            session = get_user_session(
+                user.openstack_username, user.openstack_password)
+            sg_manager = neutron.SecurityGroupManager(session)
+            sg_rule = sg_manager.rule_create(rule.validated_data['security_group_id'],
+                                             direction=rule.validated_data['direction'],
+                                             ethertype=rule.validated_data['ether_type'],
+                                             ip_protocol=rule.validated_data['protocol'],
+                                             to_port=rule.validated_data['port_range_max'],
+                                             from_port=rule.validated_data['port_range_min'],
+                                             cidr=rule.validated_data['remote_ip_prefix']
+
+                                             )
+            return JsonResponse({"data": sg_rule.to_dict()}, safe=False)
+        else:
+            raise ValidationError(rule.errors)
