@@ -76,6 +76,15 @@ def create_openstack_user(email, admin_client, default_project=None):
             'openstack_user_id': user.id}
 
 
+def get_project(session, project_id):
+    try:
+        client = get_keystone_client_by_session(session)
+        project = client.projects.get(project_id)
+        return project
+    except Exception as e:
+        print(e)
+
+
 def create_project(name: str, username: str, description: str, password: str):
     """
     create project and assign user member to it

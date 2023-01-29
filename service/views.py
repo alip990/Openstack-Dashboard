@@ -63,10 +63,8 @@ class ProjectView(APIView):
         session = get_user_session(
             user.openstack_username, user.openstack_password)
         session = get_admin_session()
-        servers = nova.server_list_paged(session)
-        print('-----!!!!!!!___________________________________')
-        print(servers[0][0].image_name)
-        return Response(status=204)
+        project = keystone.get_project(session  ,id)
+        return JsonResponse({"name": project.name, "description": project.description, "id": id}, safe=False)
 
     def delete(self, request, id):
         """Delete a single project by id.
