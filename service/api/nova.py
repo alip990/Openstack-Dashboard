@@ -156,7 +156,7 @@ def get_keypair_list(session):
 def create_keypair(name, public_key, session):
     nova = nova_client('2', session=session)
     try:
-        nova.keypairs.create(name=name, public_key=public_key)
+        return nova.keypairs.create(name=name, public_key=public_key)
     except Exception as e:
         # print(e.code, e.message)
         if e.code == 400:

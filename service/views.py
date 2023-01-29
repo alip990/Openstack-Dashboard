@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from service.api import keystone, nova
+from service.api import keystone, nova, neutron
 from .api.keystone import get_admin_keystone_client, get_user_project_list, get_user_session, create_project, get_admin_session
 from .api.glance import get_image_list
 from .api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info
@@ -22,7 +22,7 @@ class ProjectsView(APIView):
 
     def get(self, request):
         """
-        API over user projects 
+        API over user projects
         """
         user = User.objects.get(email=request.user)
         projects = keystone.get_user_project_list(user.openstack_username)
@@ -145,10 +145,12 @@ class KeypairView(APIView):
 
         else:
             raise ValidationError(k.errors)
-        return JsonResponse({'name': k.validated_data.get('name'), 'public_key': k.validated_data.get('public_key')})
+        return JsonResponse({'name': keypair.name, 'public_key': keypair.public_key})
 
 
 class VmView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         vm = VmSerializer(data=request.data)
         if vm.is_valid():
@@ -177,3 +179,99 @@ class VmView(APIView):
             return JsonResponse({'data': [vm]}, safe=False)
         vms = get_server_list(session)
         return JsonResponse({'data': vms}, safe=False)
+
+
+class VmSecurityGroupView(APIView):
+    def get(self, request):
+        pass
+
+
+def serialize_security_group(sg):
+    return {
+        "id": sg.id,
+        "name": sg.name,
+        "description": sg.description,
+        "project_id": sg.project_id,
+        "created_at": sg.created_at,
+        "updated_at": sg.updated_at,
+        "security_group_rules": [{
+            "id": sgr["id"],
+            "description": sgr["description"],
+            "created_at": sgr["created_at"],
+            "updated_at": sgr["updated_at"],
+            "direction": sgr["direction"],
+            "protocol": sgr["protocol"],
+            "ether_type": sgr["ethertype"],
+            "remote_ip_prefix": sgr["remote_ip_prefix"],
+            "port_range_min": sgr["port_range_min"],
+            "port_range_max": sgr["port_range_max"],
+        } for sgr in sg.security_group_rules],
+    }
+
+
+class SecurityGroupsView(APIView):
+
+    def get(self, request):
+        project_id = request.GET.get('project_id', None)
+        if not project_id:
+            raise ValidationError('you should provide project_id in query')
+        user = User.objects.get(email=request.user)
+        session = keystone.get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+        sg_manager = neutron.SecurityGroupManager(session)
+        sgs = sg_manager.list(project_id=project_id)
+        return JsonResponse({'data': [serialize_security_group(sg) for sg in sgs]}, safe=False)
+
+    def post(self, request):
+        name = request.data.get('name', None)
+        if not name:
+            raise ValidationError('name is required')
+        description = request.data.get('description', None)
+        project_id = request.query_params.get('project_id', None)
+        if not project_id:
+            raise ValidationError(
+                'project_id should be provided in query param')
+        user = User.objects.get(email=request.user)
+        session = get_user_session(
+            user.openstack_username, user.openstack_password)
+        sg_manager = neutron.SecurityGroupManager(session)
+        sg = sg_manager.create(
+            name=name, desc=description, project_id=project_id)
+        return JsonResponse({'data': serialize_security_group(sg)}, safe=False)
+
+    def delete(self, request):
+        project_id = request.query_params.get('project_id', None)
+        security_id = request.query_params.get('security_id', None)
+        if not project_id or not security_id:
+            raise ValidationError(
+                'project_id and security_id should be provided in query params ')
+
+        user = User.objects.get(email=request.user)
+        session = get_user_session(
+            user.openstack_username, user.openstack_password)
+        sg_manager = neutron.SecurityGroupManager(session)
+        sg_manager.delete(security_id)
+        return Response(status=201)
+
+    def patch(self, request):
+        project_id = request.query_params.get('project_id', None)
+        security_id = request.query_params.get('security_id', None)
+        if not project_id or not security_id:
+            raise ValidationError(
+                'project_id and security_id should be provided in query params ')
+        name = request.POST.get('name', None)
+        description = request.POST.get('description', None)
+        user = User.objects.get(email=request.user)
+        session = get_user_session(
+            user.openstack_username, user.openstack_password)
+        sg_manager = neutron.SecurityGroupManager(session)
+        sg = sg_manager.update(security_id, name, desc=description)
+        return JsonResponse({"data": sg.to_dict()}, safe=False)
+
+
+class SecurityGroupRuleView(APIView):
+    def delete(self, request):
+        pass
+
+    def post(self, request):
+        pass

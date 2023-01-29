@@ -432,7 +432,6 @@ def neutronclient(session):
     return neutron_client.Client(session=session)
 
 
-
 def create_network(project_name, session):
 
     network_name = project_name+'_network'
