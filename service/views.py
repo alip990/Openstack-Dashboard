@@ -155,7 +155,9 @@ class VmView(APIView):
         if vm.is_valid():
             user = User.objects.get(email=request.user)
             session = get_user_session(
-                user.openstack_username, user.openstack_password, vm.validated_data.get('project_id'),)
+                user.openstack_username,
+                user.openstack_password,
+                project_id=vm.validated_data.get('project_id'))
             # server = create_server(vm.validated_data.get('name'),
             #                        vm.validated_data.get('flavor_id'),
             #                        vm.validated_data.get('image_id'),
@@ -163,12 +165,13 @@ class VmView(APIView):
             #                        session
             #                        )
             data = vm.validated_data
-            server = nova.server_create(session=session, name = data['name'] , 
-            key_name=data['keypair_id'],
-            image_id=data['image_id'],
-            flavor_id=data['flavor_id'],
-            security_groups=['default']
-            )
+            server = nova.server_create(session=session, name=data['name'],
+                                        key_name=data['keypair_id'],
+                                        image_id=data['image_id'],
+                                        flavor_id=data['flavor_id'],
+                                        instance_count=data['instance_count'],
+                                        # security_groups=['default']
+                                        )
             return JsonResponse({"success": True, 'virtual_machine_id': server.id}, safe=False)
         else:
             raise ValidationError(vm.errors)

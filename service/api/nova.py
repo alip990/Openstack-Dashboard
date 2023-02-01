@@ -225,8 +225,8 @@ def create_server(name, flavor_id, image_id, keypair_name, session):
 
 def server_create(session, name, image_id, flavor_id, key_name, user_data=None,
                   security_groups=None, block_device_mapping=None,
-                  block_device_mapping_v2=None, nics=[{'net-id': '__auto_allocate__'},],
-                  availability_zone='nova', instance_count=1, admin_pass='asd123',
+                  block_device_mapping_v2=None, nics=[{'net-id': '__auto_allocate__'}, ],
+                  availability_zone=None, instance_count=1, admin_pass='asd123',
                   disk_config=None, config_drive=None, meta=None,
                   scheduler_hints=None):
     microversion = get_microversion(session, ("multiattach",
