@@ -1,6 +1,7 @@
+import logging
 from novaclient.client import Client as nova_client
 from rest_framework.serializers import ValidationError
-from .neutron import  get_project_default_network
+from .neutron import get_project_default_network
 from glanceclient import Client as glance_client
 from .glance import get_image_by_id
 from novaclient.v2 import instance_action as nova_instance_action
@@ -10,6 +11,7 @@ from service.api import _nova
 get_microversion = _nova.get_microversion
 server_get = _nova.server_get
 Server = _nova.Server
+LOG = logging.getLogger(__name__)
 
 
 def server_pause(session, instance_id):
@@ -41,7 +43,6 @@ def server_reboot(session, instance_id, soft_reboot=False):
     if soft_reboot:
         hardness = nova_servers.REBOOT_SOFT
     _nova.novaclient(session).servers.reboot(instance_id, hardness)
-
 
 
 def update_pagination(entities, page_size, marker, reversed_order=False):
@@ -220,6 +221,48 @@ def create_server(name, flavor_id, image_id, keypair_name, session):
             raise ValidationError('object 22not found')
         print(e)
         raise ValidationError('object11 not found')
+
+
+def server_create(session, name, image_id, flavor_id, key_name, user_data=None,
+                  security_groups=None, block_device_mapping=None,
+                  block_device_mapping_v2=None, nics=[{'net-id': '__auto_allocate__'},],
+                  availability_zone='nova', instance_count=1, admin_pass='asd123',
+                  disk_config=None, config_drive=None, meta=None,
+                  scheduler_hints=None):
+    microversion = get_microversion(session, ("multiattach",
+                                              #   "instance_description",
+                                              "auto_allocated_network"))
+    nova_client = _nova.novaclient(session, version=microversion)
+
+    # NOTE Handling auto allocated network
+    # Nova API 2.37 or later, it accepts a special string 'auto' for nics
+    # which means nova uses a network that is available for a current project
+    # if one exists and otherwise it creates a network automatically.
+    # This special handling is processed here as JS side assumes 'nics'
+    # is a list and it is easiest to handle it here.
+    if nics:
+        is_auto_allocate = any(nic.get('net-id') == '__auto_allocate__'
+                               for nic in nics)
+        if is_auto_allocate:
+            nics = 'auto'
+    nics = 'auto'
+    kwargs = {}
+    # if description is not None:
+    #     kwargs['description'] = description
+
+    return Server(nova_client.servers.create(
+        name.strip(), image_id, flavor_id, userdata=user_data,
+        security_groups=security_groups,
+        key_name=key_name, block_device_mapping=block_device_mapping,
+        block_device_mapping_v2=block_device_mapping_v2,
+        nics=nics, availability_zone=availability_zone,
+        min_count=instance_count, admin_pass=admin_pass,
+        disk_config=disk_config, config_drive=config_drive,
+        meta=meta, scheduler_hints=scheduler_hints, **kwargs), session)
+
+
+def server_delete(session, instance_id):
+    _nova.novaclient(session).servers.delete(instance_id)
 
 
 def get_server_list(session):

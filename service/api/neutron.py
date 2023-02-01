@@ -1,3 +1,8 @@
+from service.api import base
+import itertools
+import copy
+from collections.abc import Sequence
+import collections
 from neutronclient.v2_0.client import Client as neutron_client
 
 
@@ -7,13 +12,11 @@ from novaclient import exceptions as nova_exc
 
 import netaddr
 
+import logging
 
-import collections
-from collections.abc import Sequence
-import copy
-import itertools
+LOG = logging.getLogger(__name__)
+
 # import memoized
-from service.api import base
 
 IP_VERSION_DICT = {4: 'IPv4', 6: 'IPv6'}
 
@@ -98,7 +101,27 @@ class SecurityGroup(NeutronAPIDictWrapper):
         super().__init__(sg)
 
     def to_dict(self):
-        return {k: self._apidict[k] for k in self._apidict if k != 'rules'}
+        sg = self
+        return {
+            "id": sg.id,
+            "name": sg.name,
+            "description": sg.description,
+            "project_id": sg.project_id,
+            "created_at": sg.created_at,
+            "updated_at": sg.updated_at,
+            "security_group_rules": [{
+                "id": sgr["id"],
+                "description": sgr["description"],
+                "created_at": sgr["created_at"],
+                "updated_at": sgr["updated_at"],
+                "direction": sgr["direction"],
+                "protocol": sgr["protocol"],
+                "ether_type": sgr["ethertype"],
+                "remote_ip_prefix": sgr["remote_ip_prefix"],
+                "port_range_min": sgr["port_range_min"],
+                "port_range_max": sgr["port_range_max"],
+            } for sgr in sg.security_group_rules],
+        }
 
 
 class SecurityGroupRule(NeutronAPIDictWrapper):
@@ -270,6 +293,7 @@ class SecurityGroupManager(object):
 
         :returns: SecurityGroup object created
         """
+        LOG.debug('SecurityGroup.create()')
         body = {'security_group': {'name': name,
                                    'description': desc,
                                    'tenant_id': project_id}}
@@ -364,6 +388,14 @@ class SecurityGroupManager(object):
             port_update(self.session, p.id, **params)
 
 
+class Router(NeutronAPIDictWrapper):
+    """Wrapper for neutron routers."""
+
+
+def security_group_create(session, name, desc, project_id=None):
+    return SecurityGroupManager(session).create(name, desc, project_id)
+
+
 # @profiler.trace
 def port_list(session, **params):
     print("port_list(): params=%s", params)
@@ -433,10 +465,11 @@ def neutronclient(session):
 
 
 def create_network(project_name, session):
+    LOG.debug(
+        f'Start creating network for user_id :{session.get_user_id()} , project_id:{session.get_project_id()}')
 
     network_name = project_name+'_network'
     neutron = neutron_client.Client(session=session)
-
     try:
         body_sample = {'network': {'name': network_name,
                        'admin_state_up': True}}
@@ -444,18 +477,23 @@ def create_network(project_name, session):
         netw = neutron.create_network(body=body_sample)
         net_dict = netw['network']
         network_id = net_dict['id']
-        print('Network %s created' % network_id)
+        LOG.debug(
+            f'Network {network_name}:{network_id} created for {session.get_project_id()}')
 
         body_create_subnet = {'subnets': [{'cidr': '192.168.199.0/24',
                               'ip_version': 4, 'network_id': network_id}]}
 
         subnet = neutron.create_subnet(body=body_create_subnet)
-        print('Created subnet %s' % subnet)
+        LOG.debug(
+            f'subnet {subnet} created for {session.get_project_id()}')
+
     except Exception as e:
-        print(e)
+        LOG.error(e)
 
 
 def create_router(network_id, project_name, session):
+    LOG.debug(
+        f'Start creating router for user_id :{session.get_user_id()} , project_id:{session.get_project_id()}')
 
     try:
         neutron = neutron_client.Client(session=session)
@@ -463,10 +501,12 @@ def create_router(network_id, project_name, session):
         neutron.format = 'json'
         request = {'router': {'name': router_name,
                               'admin_state_up': True}}
+
         router = neutron.create_router(request)
         router_id = router['router']['id']
         router = neutron.show_router(router_id)
-        print(router)
+        LOG.debug(
+            f'router {router_name}:{router_id} created for :{session.get_project_id()}')
         body_value = {'port': {
             'admin_state_up': True,
             'device_id': router_id,
@@ -475,19 +515,78 @@ def create_router(network_id, project_name, session):
         }}
 
         response = neutron.create_port(body=body_value)
-        print(response)
-    finally:
-        print("Execution completed")
+        LOG.debug(
+            f'port port1 created for :{session.get_project_id()}')
         return router
+
+    except Exception as e:
+        LOG.error(e)
 
 
 def get_project_default_network(session):
-    # todo
+    # todo get default network by better way
     try:
         neutron = neutron_client.Client(session=session)
         # network_name = project_name+'_network'
         network = neutron.list_networks()['networks'][0]
-        print(network)
+        LOG.debug(f'default network for {session.get_project_id()}')
         return network
     except Exception as e:
-        print(e)
+        LOG.error(e)
+
+
+def get_ipver_str(ip_version):
+    """Convert an ip version number to a human-friendly string."""
+    return IP_VERSION_DICT.get(ip_version, '')
+
+
+class Subnet(NeutronAPIDictWrapper):
+    """Wrapper for neutron subnets."""
+
+    def __init__(self, apidict):
+        apidict['ipver_str'] = get_ipver_str(apidict['ip_version'])
+        super().__init__(apidict)
+
+
+def subnet_list(session, **params):
+    LOG.debug("subnet_list(): params=%s", params)
+    subnets = neutronclient(session).list_subnets(**params).get('subnets')
+    return [Subnet(s) for s in subnets]
+
+
+def subnet_create(session, network_id, **kwargs):
+    """Create a subnet on a specified network.
+
+    :param session: request session
+    :param network_id: network id a subnet is created on
+    :param cidr: (optional) subnet IP address range
+    :param ip_version: (optional) IP version (4 or 6)
+    :param gateway_ip: (optional) IP address of gateway
+    :param tenant_id: (optional) tenant id of the subnet created
+    :param name: (optional) name of the subnet created
+    :param subnetpool_id: (optional) subnetpool to allocate prefix from
+    :param prefixlen: (optional) length of prefix to allocate
+    :returns: Subnet object
+
+    Although both cidr+ip_version and subnetpool_id+preifxlen is listed as
+    optional you MUST pass along one of the combinations to get a successful
+    result.
+    """
+    LOG.debug("subnet_create(): netid=%(network_id)s, kwargs=%(kwargs)s",
+              {'network_id': network_id, 'kwargs': kwargs})
+    body = {'subnet': {'network_id': network_id}}
+    if 'tenant_id' not in kwargs:
+        kwargs['tenant_id'] = session.get_project_id()
+    body['subnet'].update(kwargs)
+    subnet = neutronclient(session).create_subnet(body=body).get('subnet')
+    return Subnet(subnet)
+
+
+def router_create(session, **kwargs):
+    LOG.debug("router_create():, kwargs=%s", kwargs)
+    body = {'router': {}}
+    if 'tenant_id' not in kwargs:
+        kwargs['tenant_id'] = session.get_project_id()
+    body['router'].update(kwargs)
+    router = neutronclient(session).create_router(body=body).get('router')
+    return Router(router)

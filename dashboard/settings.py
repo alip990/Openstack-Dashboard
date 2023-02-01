@@ -27,6 +27,21 @@ SECRET_KEY = 'm%f)zrw23aoars^6-g=poe%9h-(wxbk9@wvj)8(#6f2-8%_88h'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}
+
+
 ALLOWED_HOSTS = []
 OPENSTACK_URL = os.environ.get('OPENSTACK_URL')
 OPENSTACK_ADMIN_USERNAME = os.environ.get('OPENSTACK_ADMIN_USERNAME')
@@ -44,6 +59,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users'
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

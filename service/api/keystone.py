@@ -125,7 +125,9 @@ def delete_project(session, project_id):
 def project_update(session, project, username, name=None, description=None,
                    enabled=None,):
     try:
-        client = get_keystone_client_by_session(session)
+        # client = get_keystone_client_by_session(session)
+        client = get_admin_keystone_client()
+
         if name:
             name = username+'_'+name
         pr = client.projects.update(project, name=name, description=description

@@ -63,7 +63,7 @@ class ProjectView(APIView):
         session = get_user_session(
             user.openstack_username, user.openstack_password)
         session = get_admin_session()
-        project = keystone.get_project(session  ,id)
+        project = keystone.get_project(session, id)
         return JsonResponse({"name": project.name, "description": project.description, "id": id}, safe=False)
 
     def delete(self, request, id):
@@ -96,6 +96,7 @@ class ProjectView(APIView):
 
         project = keystone.project_update(
             session, id, username=user.email, name=name, description=description)
+        project = keystone.get_project(session, id)
 
         return JsonResponse({"name": project.name, "description": project.description, "id": id}, safe=False)
 
@@ -155,12 +156,19 @@ class VmView(APIView):
             user = User.objects.get(email=request.user)
             session = get_user_session(
                 user.openstack_username, user.openstack_password, vm.validated_data.get('project_id'),)
-            server = create_server(vm.validated_data.get('name'),
-                                   vm.validated_data.get('flavor_id'),
-                                   vm.validated_data.get('image_id'),
-                                   vm.validated_data.get('keypair_id'),
-                                   session
-                                   )
+            # server = create_server(vm.validated_data.get('name'),
+            #                        vm.validated_data.get('flavor_id'),
+            #                        vm.validated_data.get('image_id'),
+            #                        vm.validated_data.get('keypair_id'),
+            #                        session
+            #                        )
+            data = vm.validated_data
+            server = nova.server_create(session=session, name = data['name'] , 
+            key_name=data['keypair_id'],
+            image_id=data['image_id'],
+            flavor_id=data['flavor_id'],
+            security_groups=['default']
+            )
             return JsonResponse({"success": True, 'virtual_machine_id': server.id}, safe=False)
         else:
             raise ValidationError(vm.errors)
@@ -217,29 +225,6 @@ class VmSecurityGroupView(APIView):
         pass
 
 
-def serialize_security_group(sg):
-    return {
-        "id": sg.id,
-        "name": sg.name,
-        "description": sg.description,
-        "project_id": sg.project_id,
-        "created_at": sg.created_at,
-        "updated_at": sg.updated_at,
-        "security_group_rules": [{
-            "id": sgr["id"],
-            "description": sgr["description"],
-            "created_at": sgr["created_at"],
-            "updated_at": sgr["updated_at"],
-            "direction": sgr["direction"],
-            "protocol": sgr["protocol"],
-            "ether_type": sgr["ethertype"],
-            "remote_ip_prefix": sgr["remote_ip_prefix"],
-            "port_range_min": sgr["port_range_min"],
-            "port_range_max": sgr["port_range_max"],
-        } for sgr in sg.security_group_rules],
-    }
-
-
 class SecurityGroupsView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -252,7 +237,7 @@ class SecurityGroupsView(APIView):
             user.openstack_username, user.openstack_password, project_id)
         sg_manager = neutron.SecurityGroupManager(session)
         sgs = sg_manager.list(project_id=project_id)
-        return JsonResponse({'data': [serialize_security_group(sg) for sg in sgs]}, safe=False)
+        return JsonResponse({'data': [sg.to_dict() for sg in sgs]}, safe=False)
 
     def post(self, request):
         name = request.data.get('name', None)
@@ -269,7 +254,8 @@ class SecurityGroupsView(APIView):
         sg_manager = neutron.SecurityGroupManager(session)
         sg = sg_manager.create(
             name=name, desc=description, project_id=project_id)
-        return JsonResponse({'data': serialize_security_group(sg)}, safe=False)
+        neutron.security_group_create(session, name=name, desc=description)
+        return JsonResponse({'data': sg.to_dict()}, safe=False)
 
     def delete(self, request):
         project_id = request.query_params.get('project_id', None)

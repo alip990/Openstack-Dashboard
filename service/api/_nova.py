@@ -167,7 +167,7 @@ def get_microversion(session, features):
 def novaclient(session, version=None):
     # if isinstance(version, api_versions.APIVersion):
     #     version = version.get_string()
-    return nova_client.Client('2', session=session)
+    return nova_client.Client('2.37', session=session)
 
 
 def get_novaclient_with_instance_desc(session):
