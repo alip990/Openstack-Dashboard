@@ -1,17 +1,145 @@
 import logging
-from novaclient.client import Client as nova_client
+from collections import OrderedDict
+
+from django.utils.http import urlencode
 from rest_framework.serializers import ValidationError
+
 from .neutron import get_project_default_network
-from glanceclient import Client as glance_client
 from .glance import get_image_by_id
+from service.api import _nova, base
+
 from novaclient.v2 import instance_action as nova_instance_action
 from novaclient.v2 import servers as nova_servers
+from novaclient import exceptions as nova_exception
+from novaclient.client import Client as nova_client
+from glanceclient import Client as glance_client
 
-from service.api import _nova
 get_microversion = _nova.get_microversion
 server_get = _nova.server_get
 Server = _nova.Server
 LOG = logging.getLogger(__name__)
+
+
+class VNCConsole(base.APIDictWrapper):
+    """Wrapper for the "console" dictionary.
+
+    Returned by the novaclient.servers.get_vnc_console method.
+    """
+    _attrs = ['url', 'type']
+
+
+class SPICEConsole(base.APIDictWrapper):
+    """Wrapper for the "console" dictionary.
+
+    Returned by the novaclient.servers.get_spice_console method.
+    """
+    _attrs = ['url', 'type']
+
+
+class RDPConsole(base.APIDictWrapper):
+    """Wrapper for the "console" dictionary.
+
+    Returned by the novaclient.servers.get_rdp_console method.
+    """
+    _attrs = ['url', 'type']
+
+
+class SerialConsole(base.APIDictWrapper):
+    """Wrapper for the "console" dictionary.
+
+    Returned by the novaclient.servers.get_serial_console method.
+    """
+    _attrs = ['url', 'type']
+
+
+class MKSConsole(base.APIDictWrapper):
+    """Wrapper for the "console" dictionary.
+
+    Returned by the novaclient.servers.get_mks_console method.
+    """
+    _attrs = ['url', 'type']
+
+
+def server_vnc_console(session, instance_id, console_type='novnc'):
+    nc = _nova.novaclient(session)
+    console = nc.servers.get_vnc_console(instance_id, console_type)
+    return VNCConsole(console['remote_console'])
+
+
+def server_spice_console(session, instance_id, console_type='spice-html5'):
+    nc = _nova.novaclient(session)
+    console = nc.servers.get_spice_console(instance_id, console_type)
+
+    return SPICEConsole(console['console'])
+
+
+def server_rdp_console(session, instance_id, console_type='rdp-html5'):
+    nc = _nova.novaclient(session)
+    console = nc.servers.get_rdp_console(instance_id, console_type)
+    return RDPConsole(console['console'])
+
+
+def server_serial_console(session, instance_id, console_type='serial'):
+    nc = _nova.novaclient(session)
+    console = nc.servers.get_serial_console(instance_id, console_type)
+    return SerialConsole(console['console'])
+
+
+def server_mks_console(session, instance_id, console_type='mks'):
+    microver = get_microversion(session, "remote_console_mks")
+    nc = _nova.novaclient(session, microver)
+    console = nc.servers.get_mks_console(instance_id, console_type)
+
+    return MKSConsole(console['remote_console'])
+
+
+CONSOLES = OrderedDict([('VNC', server_vnc_console),
+                       ('SPICE', server_spice_console),
+                       ('RDP', server_rdp_console),
+                       ('SERIAL', server_serial_console),
+                       ('MKS', server_mks_console)])
+
+
+def get_console(session, console_type, instance):
+    """Get a tuple of console url and console type."""
+    if console_type == 'AUTO':
+        check_consoles = CONSOLES
+    else:
+        try:
+            check_consoles = {console_type: CONSOLES[console_type]}
+        except KeyError:
+            msg = 'Console type "%s" not supported.' % console_type
+            # raise exceptions.NotAvailable(msg)
+            raise Exception(msg)
+
+    # Ugly workaround due novaclient API change from 2.17 to 2.18.
+    try:
+        httpnotimplemented = nova_exception.HttpNotImplemented
+    except AttributeError:
+        httpnotimplemented = nova_exception.HTTPNotImplemented
+    for con_type, api_call in check_consoles.items():
+        try:
+            console = api_call(session, instance.id)
+        # If not supported, don't log it to avoid lot of errors in case
+        # of AUTO.
+        except httpnotimplemented:
+            continue
+        except Exception:
+            LOG.debug('Console not available', exc_info=True)
+            continue
+
+        if con_type == 'SERIAL':
+            console_url = console.url
+        else:
+            console_url = "%s&%s(%s)" % (
+                          console.url,
+                  urlencode({'title': 'getattr(instance, "name", "")'}),
+                instance.id)
+
+        return (con_type, console_url)
+
+    # raise exceptions.NotAvailable(_('No available console found.'))
+    raise Exception('No available console found')
 
 
 def server_pause(session, instance_id):
@@ -275,7 +403,7 @@ def get_server_list(session):
         "addresses": server.addresses,
         "created": server.created,
         "id": server.id,
-        "image": get_image_by_id(server.image['id'], session),
+        # "image": get_image_by_id(server.image['id'], session),
         "key_name": server.key_name,
         "metadata": server.metadata,
         "name": server.name,

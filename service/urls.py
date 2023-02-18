@@ -1,6 +1,6 @@
 from django.urls import path, re_path
 from django.urls import path
-from .views import ProjectsView, ImageView, FlavorView, KeypairView, VmView, ProjectView, SecurityGroupsView, VmOperation, SecurityGroupRuleView
+from .views import ProjectsView, ImageView, FlavorView, KeypairView, VmView, ProjectView, SecurityGroupsView, VmOperationView, SecurityGroupRuleView, VmConsoleView
 
 urlpatterns = [
     path('/projects/',  ProjectsView.as_view()),
@@ -11,6 +11,6 @@ urlpatterns = [
     path('/vm/', VmView.as_view()),
     path('/security-groups/', SecurityGroupsView.as_view()),
     path('/security-group-rule/', SecurityGroupRuleView.as_view()),
-    path('/vm/operation/', VmOperation.as_view())
-
+    path('/vm/operation/', VmOperationView.as_view()),
+    path('/vm/console/', VmConsoleView.as_view())
 ]

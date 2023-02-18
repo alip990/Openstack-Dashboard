@@ -190,7 +190,7 @@ class VmView(APIView):
         return JsonResponse({'data': vms}, safe=False)
 
 
-class VmOperation(APIView):
+class VmOperationView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -221,6 +221,28 @@ class VmOperation(APIView):
         }
         operations[operation](session, virtual_machine_id)
         return Response(status=201)
+
+
+class VmConsoleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        project_id = request.GET.get('project_id', None)
+        vm_id = request.GET.get('virtual_machine_id', None)
+
+        if not project_id:
+            raise ValidationError('you should provide project_id in query')
+        if not vm_id:
+            raise ValidationError(
+                'you should provide virtual_machine_id in query')
+
+        user = User.objects.get(email=request.user)
+        session = keystone.get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+        vm = nova.server_get(session, instance_id=vm_id)
+        (con_type, console_url) = nova.get_console(
+            session, console_type="AUTO", instance=vm)
+        return JsonResponse({"data": {"con_type": con_type, "console_url": console_url}}, safe=False)
 
 
 class VmSecurityGroupView(APIView):
