@@ -60,6 +60,10 @@ class MKSConsole(base.APIDictWrapper):
     _attrs = ['url', 'type']
 
 
+def snapshot_create(session, instance_id, name):
+    return _nova.novaclient(session).servers.create_image(instance_id, name,)
+
+
 def server_vnc_console(session, instance_id, console_type='novnc'):
     nc = _nova.novaclient(session)
     console = nc.servers.get_vnc_console(instance_id, console_type)
@@ -133,7 +137,7 @@ def get_console(session, console_type, instance):
         else:
             console_url = "%s&%s(%s)" % (
                           console.url,
-                  urlencode({'title': 'getattr(instance, "name", "")'}),
+                urlencode({'title': getattr(instance, "name", "")}),
                 instance.id)
 
         return (con_type, console_url)

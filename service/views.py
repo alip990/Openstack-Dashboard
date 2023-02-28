@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from service.api import keystone, nova, neutron
+from service.api import keystone, nova, neutron, glance
 from .api.keystone import get_admin_keystone_client, get_user_project_list, get_user_session, create_project, get_admin_session
 from .api.glance import get_image_list
 from .api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info
@@ -107,6 +107,60 @@ class ImageView(APIView):
         session = get_admin_session()
         images = get_image_list(session)
         return JsonResponse({"data": images}, safe=False)
+
+
+class SnapShotView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        project_id = request.GET.get('project_id', None)
+        vm_id = request.GET.get('virtual_machine_id')
+
+        if (not project_id):
+            raise ValidationError('you should provide project_id in query')
+
+        user = User.objects.get(email=request.user)
+        session = keystone.get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+
+        filters = {"image_type": "snapshot"}
+        if (vm_id):
+            filters['instance_uuid'] = vm_id
+        (wrapped_images, has_more_data, has_prev_data) = glance.image_list_detailed(
+            session=session, filters=filters)
+        return JsonResponse({'data': [image.to_dict() for image in wrapped_images]}, safe=False)
+
+    def post(self, request):
+        vm_id = request.data.get('virtual_machine_id')
+        project_id = request.data.get('project_id')
+        name = request.data.get('name')
+        if not project_id:
+            raise ValidationError('you should provide project_id in body')
+        if not vm_id:
+            raise ValidationError(
+                'you should provide virtual_machine_id in body')
+        user = User.objects.get(email=request.user)
+        session = keystone.get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+        snapshot = nova.snapshot_create(session, instance_id=vm_id, name=name)
+        print("snapshot", snapshot)
+
+        return JsonResponse({'data': 'flavors'}, safe=False)
+
+    def delete(self, request):
+        project_id = request.GET.get('project_id', None)
+        snapshot_id = request.GET.get('snapshot_id', None)
+
+        if (not project_id):
+            raise ValidationError('you should provide project_id in query')
+        if (not snapshot_id):
+            raise ValidationError('you should provide snapshot_id in query')
+        user = User.objects.get(email=request.user)
+        session = keystone.get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+
+        glance.image_delete(session, image_id=snapshot_id)
+        return JsonResponse({'success': True}, safe=False)
 
 
 class FlavorView(APIView):
@@ -246,8 +300,23 @@ class VmConsoleView(APIView):
 
 
 class VmSecurityGroupView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
-        pass
+        project_id = request.GET.get('project_id', None)
+        vm_id = request.GET.get('virtual_machine_id', None)
+
+        if not project_id:
+            raise ValidationError('you should provide project_id in query')
+        if not vm_id:
+            raise ValidationError(
+                'you should provide virtual_machine_id in query')
+        user = User.objects.get(email=request.user)
+        session = keystone.get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+        sg_manager = neutron.SecurityGroupManager(session)
+        sgs = sg_manager.list_by_instance(instance_id=vm_id)
+        return JsonResponse({'data': [sg.to_dict() for sg in sgs]}, safe=False)
 
 
 class SecurityGroupsView(APIView):

@@ -4,6 +4,7 @@ from glanceclient import Client as glance_client
 from service.api import base
 
 from collections import abc
+import itertools
 
 
 from keystoneauth1.identity import v3
@@ -133,3 +134,142 @@ def get_image_by_id(id, session):
             "created_at": image.created_at,
             "photo": image.photo,
             }
+
+
+def _normalize_is_public_filter(filters):
+    if not filters:
+        return
+
+    # Glance v2 uses filter 'visibility' ('public', 'private', ...).
+    if 'is_public' in filters:
+        # Glance v2: Replace 'is_public' with 'visibility'.
+        visibility = PUBLIC_TO_VISIBILITY_MAP[filters['is_public']]
+        del filters['is_public']
+        if visibility is not None:
+            filters['visibility'] = visibility
+
+
+def _normalize_owner_id_filter(filters):
+    if not filters:
+        return
+
+    # Glance v2 uses filter 'owner' (Project ID).
+    if 'property-owner_id' in filters:
+        # Glance v2: Replace 'property-owner_id' with 'owner'.
+        filters['owner'] = filters['property-owner_id']
+        del filters['property-owner_id']
+
+
+def _normalize_list_input(filters, **kwargs):
+    _normalize_is_public_filter(filters)
+    _normalize_owner_id_filter(filters)
+
+
+def image_delete(session, image_id):
+    return glanceclient(session).images.delete(image_id)
+
+
+def image_list_detailed(session, marker=None, sort_dir='desc',
+                        sort_key='created_at', filters=None, paginate=False,
+                        reversed_order=False, **kwargs):
+    """Thin layer above glanceclient, for handling pagination issues.
+
+    It provides iterating both forward and backward on top of ascetic
+    OpenStack pagination API - which natively supports only iterating forward
+    through the entries. Thus in order to retrieve list of objects at previous
+    page, a request with the reverse entries order had to be made to Glance,
+    using the first object id on current page as the marker - restoring
+    the original items ordering before sending them back to the UI.
+
+    :param request:
+
+        The request object coming from browser to be passed further into
+        Glance service.
+
+    :param marker:
+
+        The id of an object which defines a starting point of a query sent to
+        Glance service.
+
+    :param sort_dir:
+
+        The direction by which the resulting image list throughout all pages
+        (if pagination is enabled) will be sorted. Could be either 'asc'
+        (ascending) or 'desc' (descending), defaults to 'desc'.
+
+    :param sort_key:
+
+        The name of key by which the resulting image list throughout all
+        pages (if pagination is enabled) will be sorted. Defaults to
+        'created_at'.
+
+    :param filters:
+
+        A dictionary of filters passed as is to Glance service.
+
+    :param paginate:
+
+        Whether the pagination is enabled. If it is, then the number of
+        entries on a single page of images table is limited to the specific
+        number stored in browser cookies.
+
+    :param reversed_order:
+
+        Set this flag to True when it's necessary to get a reversed list of
+        images from Glance (used for navigating the images list back in UI).
+    """
+    limit = 100
+    page_size = 100
+
+    if paginate:
+        request_size = page_size + 1
+    else:
+        request_size = limit
+
+    _normalize_list_input(filters, **kwargs)
+    kwargs = {'filters': filters or {}}
+
+    if marker:
+        kwargs['marker'] = marker
+    kwargs['sort_key'] = sort_key
+
+    if not reversed_order:
+        kwargs['sort_dir'] = sort_dir
+    else:
+        kwargs['sort_dir'] = 'desc' if sort_dir == 'asc' else 'asc'
+
+    images_iter = glanceclient(session).images.list(page_size=request_size,
+                                                    limit=limit,
+                                                    **kwargs)
+    has_prev_data = False
+    has_more_data = False
+    if paginate:
+        images = list(itertools.islice(images_iter, request_size))
+        # first and middle page condition
+        if len(images) > page_size:
+            images.pop(-1)
+            has_more_data = True
+            # middle page condition
+            if marker is not None:
+                has_prev_data = True
+        # first page condition when reached via prev back
+        elif reversed_order and marker is not None:
+            has_more_data = True
+        # last page condition
+        elif marker is not None:
+            has_prev_data = True
+
+        # restore the original ordering here
+        if reversed_order:
+            images = sorted(images, key=lambda image:
+                            (getattr(image, sort_key) or '').lower(),
+                            reverse=(sort_dir == 'desc'))
+    else:
+        images = list(images_iter)
+
+    # TODO(jpichon): Do it better
+    wrapped_images = []
+    for image in images:
+        wrapped_images.append(Image(image))
+
+    return wrapped_images, has_more_data, has_prev_data
