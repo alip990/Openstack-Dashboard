@@ -30,7 +30,7 @@ class UserModelForm(forms.ModelForm):
 class UserAdmin(admin.ModelAdmin):
     change_form_template = 'admin/user_change_form.html'
     form = UserModelForm
-
+    search_fields = ['email']
 
     def get_form(self, request, obj=None, **kwargs):
         ModelForm = super(UserAdmin, self).get_form(request, obj, **kwargs)

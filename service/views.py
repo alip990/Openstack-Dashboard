@@ -1,18 +1,22 @@
 from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.serializers import ValidationError
-import json
+import logging
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from service.api import keystone, nova, neutron, glance
-from .api.keystone import get_admin_keystone_client, get_user_project_list, get_user_session, create_project, get_admin_session
-from .api.glance import get_image_list
-from .api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info
+from .api.keystone import get_user_session, create_project, get_admin_session
+from service.api.glance import get_image_list
+from service.api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info
 from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer, SecurityGroupRuleSerializer
 # Create your views here.
 from users.models import User
+from service.models import VirtualMachineService
+
+LOG = logging.getLogger(__name__)
 
 
 class ProjectsView(APIView):
@@ -34,7 +38,7 @@ class ProjectsView(APIView):
         The PATCH data should be an application/json object with  the
         attributes to set to new values: "name" (string),  "description"
         """
-        user = User.objects.get(email=request.user)
+        user = request.user
         data = ProjectSerializer(data=request.data)
         if data.is_valid():
             project = create_project(data.validated_data.get('name'), user.openstack_username,
@@ -226,6 +230,23 @@ class VmView(APIView):
                                         instance_count=data['instance_count'],
                                         # security_groups=['default']
                                         )
+            flavor = nova.get_flavor_by_id(
+                id=data['flavor_id'], session=session)
+            LOG.debug(f'server created for user{request.user.email}')
+            LOG.debug(f'flavor{flavor}')
+
+
+# {'id': '2', 'cpu': {'size': 1, 'unit': 'core'}, 'ram': {'size': 2048, 'unit': 'mb'}, 'name': 'm1.small',
+#     'disk': {'size': 20, 'unit': 'Gb'}, 'ratings': {'monthly': 379929600, 'daily': 12664320, 'hourly': 527680}}
+            VirtualMachineService.objects.create(openstack_id=server.id,
+                                                 name=server.name,
+                                                 status="ACTIVE",
+                                                 flavor_name=flavor['name'],
+                                                 flavor_ram=flavor['ram']['size'],
+                                                 flavor_cpu=flavor['cpu']['size'],
+                                                 flavor_disk=flavor['disk']['size'],
+                                                 flavor_rating_hourly=flavor['ratings']['hourly'],
+                                                 user=request.user)
             return JsonResponse({"success": True, 'virtual_machine_id': server.id}, safe=False)
         else:
             raise ValidationError(vm.errors)
@@ -273,7 +294,14 @@ class VmOperationView(APIView):
             'hard_reboot': lambda r, s: nova.server_reboot(r, s, False),
             'soft_reboot': lambda r, s: nova.server_reboot(r, s, True),
         }
+        vm = VirtualMachineService.objects.filter(
+            openstack_id__contains=virtual_machine_id).order_by('-created_at')[0]
         operations[operation](session, virtual_machine_id)
+        if operation == "stop" or operation == "suspend" or operation == "pause":
+            vm.status = "SHUTOFF"
+        elif operation == "unpause" or operation == "start" or operation == "resume":
+            vm.status = "ACTIVE"
+        vm.save()
         return Response(status=201)
 
 

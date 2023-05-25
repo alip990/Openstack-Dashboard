@@ -94,6 +94,4 @@ class JWTAuthentication(authentication.BaseAuthentication):
         if not user.openstack_username:
             msg = 'This user has not been approved by admin.'
             raise exceptions.AuthenticationFailed(msg)
-
-
         return (user, token)

@@ -55,9 +55,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'admin_auto_filters',
+    'rangefilter',
     'rest_framework',
     'corsheaders',
-    'users'
+    'django_celery_beat',
+    'users',
+    'service.apps.ServiceConfig',
+    'reports'
 ]
 
 
