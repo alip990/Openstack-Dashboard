@@ -10,6 +10,11 @@ import itertools
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
 
+from dashboard.settings import OPENSTACK_URL, OPENSTACK_ADMIN_PASSWORD, OPENSTACK_ADMIN_USERNAME
+import logging
+
+LOG = logging.getLogger(__name__)
+
 
 class Image(base.APIResourceWrapper):
     _attrs = {"architecture", "container_format", "disk_format", "created_at",
@@ -90,14 +95,14 @@ def glanceclient(session=None):
 
     # return api_version['client'].Client(url, token=request.user.token.id,
     #                                     insecure=insecure, cacert=cacert)
-    return glance_client('2', session=get_admin_session())
+    return glance_client('2', session=session)
 
 
 def get_admin_session():
-    auth = v3.Password(auth_url="http://172.16.2.45:5000/v3/", username="admin",
-                       password="0dNFOJeHuWne6AAeWPyCHOtPEAvU903F7XvukFG7", project_name="admin",
+    auth = v3.Password(auth_url=OPENSTACK_URL, username=OPENSTACK_ADMIN_USERNAME,
+                       password=OPENSTACK_ADMIN_PASSWORD, project_name="admin",
                        user_domain_id="default", project_domain_id="default")
-    sess = session.Session(auth=auth)
+    sess = session.Session(auth=auth , )
     return sess
 
 
@@ -111,7 +116,7 @@ def get_image_list(session):
         "name": image.name,
         "min_disk": image.min_disk,
         "min_ram": image.min_ram,
-        "os_distro": image.os_distro,
+        "os_distro": image['os_distro'],
         "os_version": image.os_version,
         "os_admin_user": image.os_admin_user,
         "created_at": image.created_at,
@@ -121,7 +126,7 @@ def get_image_list(session):
 
 def get_image_by_id(id, session):
     glance = glance_client('2', session=session)
-    print('get_image_by_id', id)
+    LOG.debug('get_image_by_id', id)
     image = glance.images.get(id)
     return {"id": image.id,
             "size": image.size,

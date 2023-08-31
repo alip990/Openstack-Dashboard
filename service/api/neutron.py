@@ -398,7 +398,7 @@ def security_group_create(session, name, desc, project_id=None):
 
 # @profiler.trace
 def port_list(session, **params):
-    print("port_list(): params=%s", params)
+    LOG.debug("port_list(): params=%s", params)
     ports = neutronclient(session).list_ports(**params).get('ports')
     return [Port(p) for p in ports]
 
@@ -444,7 +444,7 @@ def unescape_port_kwargs(**kwargs):
 
 # @profiler.trace
 def port_update(session, port_id, **kwargs):
-    print("port_update(): portid=%(port_id)s, kwargs=%(kwargs)s",
+    LOG.debug("port_update(): portid=%(port_id)s, kwargs=%(kwargs)s",
           {'port_id': port_id, 'kwargs': kwargs})
     kwargs = unescape_port_kwargs(**kwargs)
     body = {'port': kwargs}
@@ -486,7 +486,7 @@ def create_network(project_name, session):
         subnet = neutron.create_subnet(body=body_create_subnet)
         LOG.debug(
             f'subnet {subnet} created for {session.get_project_id()}')
-
+        return network_id
     except Exception as e:
         LOG.error(e)
 

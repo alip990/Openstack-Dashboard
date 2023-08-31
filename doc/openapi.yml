@@ -1,0 +1,911 @@
+swagger: "2.0"
+host: localhost:8000
+info:
+  version: "1.0.0"
+  title: Auth API
+paths:
+  /users/register/:
+    post:
+      summary: Register a new user
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: user
+          description: User object
+          required: true
+          schema:
+            type: object
+            properties:
+              first_name:
+                type: string
+              last_name:
+                type: string
+              password:
+                type: string
+              email:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+              first_name:
+                type: string
+              last_name:
+                type: string
+              email:
+                type: string
+              password:
+                type: string
+      tags:
+        - Authentication
+
+  /users/login/:
+    post:
+      summary: User login
+      description: "The user logs in using their email and password. The 'has_access' parameter determines the user's access to the dashboard, which is determined by the admin in django dashboard"
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: credentials
+          description: email and password of user.
+          required: true
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+              email:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+              first_name:
+                type: string
+              last_name:
+                type: string
+              email:
+                type: string
+              has_access:
+                type: string
+                description: کاربر برای ورود به داشبرد باید توسط ادمین تایید شده باشد.
+        "401":
+          description: Unauthorized
+      tags:
+        - Authentication
+
+  /users/token/refresh/:
+    post:
+      summary: Refresh access token
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: refresh_token
+          description: Refresh token
+          required: true
+          schema:
+            type: object
+            properties:
+              refresh_token:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+              refresh_token:
+                type: string
+        "401":
+          description: Unauthorized
+      tags:
+        - Authentication
+
+  /users/token/:
+    post:
+      summary: Get access token using credentials
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: credentials
+          description: User credentials
+          required: true
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+              email:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+        "401":
+          description: Unauthorized
+      tags:
+        - Authentication
+
+  /service/project/{project_id}:
+    patch:
+      summary: Update project
+      description: |
+        This API allows you to update project details, making it easier for your teammates to collaborate and work effectively. Provide the project ID and the updated information in the request body to modify the project.
+
+        **Authorization:**
+        This API requires a valid access token to be included in the request header using the Bearer token authentication scheme.
+
+        **Path Variables:**
+        - `project_id`: The unique identifier of the project to be updated.
+
+        **Request Body:**
+        The request body should be a JSON object containing the following properties:
+        - `name`: (string) The new name of the project.
+        - `description`: (string) The updated description of the project.
+
+        **Example:**
+        Update project with ID "2679ba7aabc7418092f76bcdce39141f" and set the name to "54" and the description to "akhkjh kjkj ".
+
+        **Response:**
+        Upon a successful update, the API returns a JSON object with the following properties:
+        - `name`: (string) The updated name of the project.
+        - `description`: (string) The updated description of the project.
+        - `id`: (string) The unique identifier of the project.
+
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+        "401":
+          description: Unauthorized
+      tags:
+        - Project
+    delete:
+      summary: Delete project
+      description: |
+        This API allows you to delete a project to make your workspace more organized and suitable for your teammates. To delete a project, provide the project ID in the request path.
+
+        **Authorization:**
+        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
+
+        **Path Variables:**
+        - `project_id`: The unique identifier of the project to be deleted.
+
+        **Example:**
+        Delete the project with the ID "2679ba7aabc7418092f76bcdce39141f".
+
+        **Response:**
+        This request does not return a response body.
+
+      responses:
+        "204":
+          description: Successful operation
+        "401":
+          description: Unauthorized
+      tags:
+        - Project
+    get:
+      summary: Get project detail
+      description: |
+        This API allows you to retrieve the details of a specific project, making it easier for your teammates to access relevant information. To get the details of a project, provide the project ID in the request path.
+
+        **Authorization:**
+        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
+
+        **Path Variables:**
+        - `project_id`: The unique identifier of the project to retrieve details for.
+
+        **Example:**
+        Get the details of the project with the ID "a45d068695514ffe8680b1d8a342ea3d".
+
+        **Response:**
+        Returns the details of the project in JSON format, including the project name, description, and ID.
+
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+        "401":
+          description: Unauthorized
+      tags:
+        - Project
+
+  /service/projects/:
+    get:
+      summary: Get all user projects
+      description: |
+        This API allows you to retrieve the details of all user projects, making it easier for your teammates to access and manage projects. This endpoint returns a list of all projects associated with the user.
+
+        **Authorization:**
+        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
+
+        **Example:**
+        Get all user projects.
+
+        **Response:**
+        Returns a JSON array containing the details of all user projects. Each project object includes the project name, description, and ID.
+
+      responses:
+        "200":
+          description: Successful operation
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                id:
+                  type: string
+        "401":
+          description: Unauthorized
+      tags:
+        - Project
+
+    post:
+      summary: Create a new project
+      description: |
+        This API allows you to create a new project that belongs to the current user. You need to provide the project name and description in the request body.
+
+        **Authorization:**
+        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
+
+        **Note:**
+        The created project will be associated with the current user who is authenticated.
+
+      parameters:
+        - in: body
+          name: project
+          description: Project details
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              id:
+                type: string
+        "401":
+          description: Unauthorized
+      tags:
+        - Project
+
+  /service/image/:
+    get:
+      summary: Get all OS images
+      description: Retrieve a list of all operating systems (OS) images.
+      tags:
+        - Image
+      security:
+        - Bearer Token: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The unique identifier of the image.
+                    size:
+                      type: integer
+                      description: The size of the image.
+                    name:
+                      type: string
+                      description: The name of the image.
+                    min_disk:
+                      type: integer
+                      description: The minimum disk size required for the image.
+                    min_ram:
+                      type: integer
+                      description: The minimum RAM size required for the image.
+                    os_distro:
+                      type: string
+                      description: The distribution of the operating system.
+                    os_version:
+                      type: string
+                      description: The version of the operating system.
+                    os_admin_user:
+                      type: string
+                      description: The admin user for the operating system.
+                    created_at:
+                      type: string
+                      description: The creation date of the image.
+                    photo:
+                      type: string
+                      description: URL to an image of the OS.
+
+
+  /service/flavor/:
+    get:
+      summary: Get flavor list
+      description: Retrieve a list of available flavors in the OpenStack environment.
+      tags:
+        - Flavor
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The unique identifier of the flavor.
+                    cpu:
+                      type: object
+                      properties:
+                        size:
+                          type: integer
+                          description: The size of the CPU.
+                        unit:
+                          type: string
+                          description: The unit of measurement for the CPU size.
+                    ram:
+                      type: object
+                      properties:
+                        size:
+                          type: integer
+                          description: The size of the RAM.
+                        unit:
+                          type: string
+                          description: The unit of measurement for the RAM size.
+                    name:
+                      type: string
+                      description: The name of the flavor.
+                    disk:
+                      type: object
+                      properties:
+                        size:
+                          type: integer
+                          description: The size of the disk.
+                        unit:
+                          type: string
+                          description: The unit of measurement for the disk size.
+                    ratings:
+                      type: object
+                      properties:
+                        monthly:
+                          type: integer
+                          description: The monthly rating of the flavor.
+                        daily:
+                          type: integer
+                          description: The daily rating of the flavor.
+                        hourly:
+                          type: integer
+                          description: The hourly rating of the flavor.
+
+  /service/keypair:
+    post:
+      summary: Create or import keypair
+      description: Create or import a keypair for authentication purposes.
+      tags:
+        - Key Pair
+      security:
+        - Bearer Token: []
+      parameters:
+        - in: body
+          name: keypair
+          description: keypair object
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The name of the keypair.
+              public_key:
+                type: string
+                description: The public key value for the keypair.
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: The success message.
+
+    get:
+      summary: Get keypair list
+      description: Retrieve a list of keypairs.
+      tags:
+        - Key Pair
+      security:
+        - Bearer Token: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The unique identifier of the keypair.
+                    name:
+                      type: string
+                      description: The name of the keypair.
+                    public_key:
+                      type: string
+                      description: The public key value of the keypair.
+  /service/vm/:
+    post:
+      summary: Create a new virtual machine instance
+      description: Create a new virtual machine instance in a specific project.
+      tags:
+        - Virtual Machine
+      security:
+        - Bearer Token: []
+      parameters:
+        - in: body
+          name: vm
+          required: true
+          schema:
+            type: object
+            properties:
+              project_id:
+                type: string
+                description: The unique identifier of the project.
+              image_id:
+                type: string
+                description: The unique identifier of the OS image.
+              name:
+                type: string
+                description: The name of the virtual machine instance.
+              flavor_id:
+                type: integer
+                description: The unique identifier of the flavor.
+              keypair_id:
+                type: string
+                description: The name of the keypair for authentication.
+              instance_count:
+                type: integer
+                description: The number of instances to create.
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                description: Indicates if the operation was successful.
+    get:
+      summary: Get virtual machine instances of User
+      description: Retrieve a list of virtual machine instances of User.
+      tags:
+        - Virtual Machine
+      security:
+        - Bearer Token: []
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    accessIPv4:
+                      type: string
+                      description: The IPv4 address for access.
+                    accessIPv6:
+                      type: string
+                      description: The IPv6 address for access.
+                    addresses:
+                      type: object
+                      properties:
+                        server12@server.com_default_network:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              version:
+                                type: integer
+                              addr:
+                                type: string
+                              OS-EXT-IPS:type:
+                                type: string
+                              OS-EXT-IPS-MAC:mac_addr:
+                                type: string
+                    created:
+                      type: string
+                      description: The creation timestamp of the instance.
+                    id:
+                      type: string
+                      description: The unique identifier of the instance.
+                    image:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        size:
+                          type: integer
+                        name:
+                          type: string
+                        min_disk:
+                          type: integer
+                        min_ram:
+                          type: integer
+                        os_distro:
+                          type: string
+                        os_version:
+                          type: string
+                        os_admin_user:
+                          type: string
+                        created_at:
+                          type: string
+                        photo:
+                          type: string
+                    key_name:
+                      type: string
+                      description: The name of the keypair used.
+                    metadata:
+                      type: object
+                      description: Additional metadata for the instance.
+                    name:
+                      type: string
+                      description: The name of the instance.
+                    networks:
+                      type: object
+                      properties:
+                        server12@server.com_default_network:
+                          type: array
+                          items:
+                            type: string
+                    project_id:
+                      type: string
+                      description: The unique identifier of the project.
+                    status:
+                      type: string
+                      description: The status of the instance.
+                    hostId:
+                      type: string
+                      description: The host identifier of the instance.
+                    flavor:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        cpu:
+                          type: object
+                          properties:
+                            size:
+                              type: integer
+                            unit:
+                              type: string
+                        ram:
+                          type: object
+                          properties:
+                            size:
+                              type: integer
+                            unit:
+                              type: string
+                        name:
+                          type: string
+                        disk:
+                          type: object
+                          properties:
+                            size:
+                              type: integer
+                            unit:
+                              type: string
+                        ratings:
+                          type: object
+                          properties:
+                            monthly:
+                              type: integer
+                            daily:
+                              type: integer
+                            hourly:
+                              type: integer
+
+  /service/vm/operation/:
+    post:
+      summary: Perform operation on a virtual machine instance
+      description: Perform an operation on a virtual machine instance.
+      tags:
+        - Virtual Machine
+      # security:
+      #   - Bearer Token: []
+      parameters:
+        - in: query
+          name: project_id
+          schema:
+            type: string
+          required: true
+          description: The unique identifier of the project.
+        - in: query
+          name: virtual_machine_id
+          schema:
+            type: string
+          required: true
+          description: The unique identifier of the virtual machine instance.
+        - in: body
+          name: operation
+          schema:
+            type: object
+            properties:
+              operation:
+                type: enum
+                description: The operation to perform on the virtual machine.
+                enum:
+                  - stop
+                  - start
+                  - pause
+                  - unpause
+                  - suspend
+                  - resume
+                  - hard_reboot
+                  - soft_reboot
+
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                description: Indicates if the operation was successful.
+  /service/vm/console/:
+    get:
+      summary: Get console URL for a virtual machine instance
+      description: Get the console URL for a virtual machine instance.
+      tags:
+        - Virtual Machine
+      security:
+        - Bearer Token: []
+      parameters:
+        - in: query
+          name: project_id
+          schema:
+            type: string
+          required: true
+          description: The unique identifier of the project.
+        - in: query
+          name: virtual_machine_id
+          schema:
+            type: string
+          required: true
+          description: The unique identifier of the virtual machine instance.
+      responses:
+        '200':
+          description: OK
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  con_type:
+                    type: string
+                    description: The type of console.
+                  console_url:
+                    type: string
+                    description: The URL to access the console.
+  /service/vm/snap-shot/:
+    post:
+      summary: Create a snapshot of a virtual machine instance or project.
+      description: Create a snapshot of a virtual machine instance for backup or cloning purposes.
+      tags:
+        - Snap-shot
+      security:
+        - Bearer Token: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                project_id:
+                  type: string
+                  description: The unique identifier of the project.
+                virtual_machine_id:
+                  type: string
+                  description: The unique identifier of the virtual machine instance.
+                name:
+                  type: string
+                  description: The name of the snapshot.
+      responses:
+        '200':
+          description: OK
+
+    get:
+        summary: Get snapshots of a virtual machine instance
+        description: Retrieve snapshots of a virtual machine instance.
+        tags:
+          - Snap-shot
+        security:
+          - Bearer Token: []
+        parameters:
+          - name: project_id
+            in: query
+            required: true
+            description: The unique identifier of the project.
+            schema:
+              type: string
+          - name: virtual_machine_id
+            in: query
+            required: true
+            description: The unique identifier of the virtual machine instance.
+            schema:
+              type: string
+        responses:
+          '200':
+            description: OK
+            schema:
+                  type: object
+                  properties:
+                    owner:
+                      type: string
+                    is_public:
+                      type: boolean
+                    min_disk:
+                      type: integer
+                    protected:
+                      type: boolean
+                    created_at:
+                      type: string
+                      format: date-time
+                    architecture:
+                      type: string
+                    status:
+                      type: string
+                    disk_format:
+                      type: string
+                    size:
+                      type: integer
+                    visibility:
+                      type: string
+                    container_format:
+                      type: string
+                    updated_at:
+                      type: string
+                      format: date-time
+                    name:
+                      type: string
+                    min_ram:
+                      type: integer
+                    id:
+                      type: string
+                    checksum:
+                      type: string
+                    properties:
+                      type: object
+                      properties:
+                        photo:
+                          type: string
+                          format: uri
+                        os_version:
+                          type: string
+                        os_admin_user:
+                          type: string
+                        os_distro:
+                          type: string
+                        base_image_ref:
+                          type: string
+                        owner_user_name:
+                          type: string
+                        owner_project_name:
+                          type: string
+                        boot_roles:
+                          type: string
+                        hw_machine_type:
+                          type: string
+                        instance_uuid:
+                          type: string
+                        user_id:
+                          type: string
+                        image_type:
+                          type: string
+                        owner_id:
+                          type: string
+                        image_state:
+                          type: string
+                        image_location:
+                          type: string
+                        os_hidden:
+                          type: boolean
+                        os_hash_algo:
+                          type: string
+                        os_hash_value:
+                          type: string
+                        stores:
+                          type: string
+    delete:
+        summary: Delete snapshots for a virtual machine
+        tags:
+          - Snap-shot
+        parameters:
+          - in: query
+            name: project_id
+            required: true
+            description: ID of the project
+            schema:
+              type: string
+          - in: query
+            name: virtual_machine_id
+            required: false
+            description: ID of the virtual machine
+            schema:
+              type: string
+          - in: query
+            name: name
+            required: false
+            description: Name of the snapshot
+            schema:
+              type: string
+        responses:
+          '200':
+            description: OK
+              
+tags:
+  - name: Authentication
+    description: APIs related to user authentication

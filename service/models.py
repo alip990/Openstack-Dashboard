@@ -6,14 +6,18 @@ from users.models import User
 
 
 class Flavor(models.Model):
-    id = models.SmallIntegerField(primary_key=True)
+    id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255)
     is_deleted = models.BooleanField(default=False)
     cpu_core = models.SmallIntegerField()
     ram = models.IntegerField()
     disk = models.IntegerField()
-    rating_per_hour = models.DecimalField(max_digits=10, decimal_places=0)
+    rating_per_hour = models.DecimalField(
+        max_digits=10, decimal_places=0, verbose_name='price per hour')
     created_at = models.DateField(auto_now=True)
+
+    def __str__(self) -> str:
+        return self.name
 
 
 VirtualMachineServiceStatus = (
@@ -38,5 +42,7 @@ class VirtualMachineService(models.Model):
     flavor_rating_hourly = models.DecimalField(max_digits=10, decimal_places=0)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
+    def __str__(self) -> str:
+        return self.name
 
 # pre_save.connect(on_vm_status_change, VirtualMachineService)

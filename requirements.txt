@@ -92,3 +92,5 @@ wrapt==1.14.1
 zipp==3.15.0
 django-admin-autocomplete-filter==0.7.1
 django-admin-rangefilter==0.10.0
+django-admin-numeric-filter==0.1.9
+drf-spectacular==0.26.2

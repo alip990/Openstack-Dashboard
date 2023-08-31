@@ -325,7 +325,7 @@ def create_keypair(name, public_key, session):
     try:
         return nova.keypairs.create(name=name, public_key=public_key)
     except Exception as e:
-        # print(e.code, e.message)
+        # LOG.debug(e.code, e.message)
         if e.code == 400:
             raise ValidationError(
                 {"public_key": ["public_key is invalid " + e.message]})
@@ -349,9 +349,9 @@ def create_server(name, flavor_id, image_id, keypair_name, session):
     except Exception as e:
         raise e
         if hasattr(e, 'code') and e.code == 404:
-            print(e)
+            LOG.debug(e)
             raise ValidationError('object 22not found')
-        print(e)
+        LOG.debug(e)
         raise ValidationError('object11 not found')
 
 
@@ -400,7 +400,7 @@ def server_delete(session, instance_id):
 def get_server_list(session):
     nova = nova_client('2', session=session)
     servers = nova.servers.list(detailed=True)
-    # print('server.image', servers[0].image_id)
+    # LOG.debug('server.image', servers[0].image_id)
     a = [{
         "accessIPv4": server.accessIPv4,
         "accessIPv6": server.accessIPv6,
@@ -417,7 +417,7 @@ def get_server_list(session):
         "hostId": server.hostId,
         "flavor": get_flavor_by_id(server.flavor['id'], session)
     } for server in servers]
-    print(a)
+    LOG.debug(a)
     return a
 
 

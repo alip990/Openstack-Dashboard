@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'm%f)zrw23aoars^6-g=poe%9h-(wxbk9@wvj)8(#6f2-8%_88h'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,6 +46,7 @@ ALLOWED_HOSTS = []
 OPENSTACK_URL = os.environ.get('OPENSTACK_URL')
 OPENSTACK_ADMIN_USERNAME = os.environ.get('OPENSTACK_ADMIN_USERNAME')
 OPENSTACK_ADMIN_PASSWORD = os.environ.get('OPENSTACK_ADMIN_PASSWORD')
+OPENSTACK_SSL_CERT_FILE = os.environ.get('OPENSTACK_SSL_CERT_FILE')
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,6 +57,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'admin_auto_filters',
+    'admin_numeric_filter',
+    # 'drf_spectacular',
+    # 'drf_spectacular_sidecar',  # required for Django collectstatic discovery
     'rangefilter',
     'rest_framework',
     'corsheaders',
@@ -194,3 +198,10 @@ CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_CREDENTIALS = True
+
+# SPECTACULAR_SETTINGS = {
+#     'SWAGGER_UI_DIST': 'SIDECAR',  # shorthand to use the sidecar instead
+#     'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+#     'REDOC_DIST': 'SIDECAR',
+#     # OTHER SETTINGS
+# }

@@ -14,13 +14,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Flavor',
             fields=[
-                ('id', models.SmallIntegerField(primary_key=True, serialize=False)),
+                ('id', models.CharField(max_length=255, primary_key=True,)),
                 ('name', models.CharField(max_length=255)),
                 ('is_deleted', models.BooleanField(default=False)),
                 ('cpu_core', models.SmallIntegerField()),
                 ('ram', models.IntegerField()),
                 ('disk', models.IntegerField()),
-                ('rating_per_hour', models.DecimalField(decimal_places=0, max_digits=10)),
+                ('rating_per_hour', models.DecimalField(
+                    decimal_places=0, max_digits=10)),
                 ('created_at', models.DateField(auto_now=True)),
             ],
         ),

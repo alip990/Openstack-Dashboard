@@ -2,11 +2,14 @@ from keystoneauth1.identity import v3
 from keystoneauth1 import session
 from keystoneauth1 import exceptions as keystone_exceptions
 from keystoneclient.v3 import client
-from dashboard.settings import OPENSTACK_URL, OPENSTACK_ADMIN_PASSWORD, OPENSTACK_ADMIN_USERNAME
+from dashboard.settings import OPENSTACK_URL, OPENSTACK_ADMIN_PASSWORD, OPENSTACK_ADMIN_USERNAME, OPENSTACK_SSL_CERT_FILE
 import uuid
 from .neutron import create_network, create_router
 from rest_framework.serializers import ValidationError
 from rest_framework.exceptions import NotFound
+import logging
+
+LOG = logging.getLogger(__name__)
 
 # 'http://172.16.2.45:5000',username="admin",password="0dNFOJeHuWne6AAeWPyCHOtPEAvU903F7XvukFG7"
 
@@ -14,19 +17,22 @@ from rest_framework.exceptions import NotFound
 def get_admin_keystone_client():
     auth = v3.Password(auth_url=OPENSTACK_URL, username=OPENSTACK_ADMIN_USERNAME,
                        password=OPENSTACK_ADMIN_PASSWORD, project_name="admin",
-                       user_domain_id="default", project_domain_id="default")
+                       user_domain_id="default", project_domain_id="default",)
 
-    sess = session.Session(auth=auth)
-    keystone = client.Client(session=sess)
+    sess = session.Session(
+        auth=auth, verify=OPENSTACK_SSL_CERT_FILE)
+    keystone = client.Client(
+        session=sess,)
     return keystone
 
 
 def get_admin_session():
     auth = v3.Password(auth_url=OPENSTACK_URL, username=OPENSTACK_ADMIN_USERNAME,
                        password=OPENSTACK_ADMIN_PASSWORD, project_name="admin",
-                       user_domain_id="default", project_domain_id="default")
+                       user_domain_id="default", project_domain_id="default", )
 
-    sess = session.Session(auth=auth)
+    sess = session.Session(
+        auth=auth, verify=OPENSTACK_SSL_CERT_FILE)
     return sess
 
 
@@ -34,19 +40,23 @@ def get_user_session(username, password, project_id=None):
 
     auth = v3.Password(auth_url=OPENSTACK_URL, username=username,
                        password=password, project_id=project_id,
-                       user_domain_id="default", project_domain_id="default")
+                       user_domain_id="default", project_domain_id="default",)
 
-    sess = session.Session(auth=auth)
+    sess = session.Session(
+        auth=auth, verify=OPENSTACK_SSL_CERT_FILE)
     return sess
 
 
 def get_user_keystone_client(username, password):
+    # TODO
     auth = v3.Password(auth_url=OPENSTACK_URL, username=OPENSTACK_ADMIN_USERNAME,
                        password=OPENSTACK_ADMIN_PASSWORD, project_name="admin",
                        user_domain_id="default", project_domain_id="default")
 
-    sess = session.Session(auth=auth)
-    keystone = client.Client(session=sess)
+    sess = session.Session(
+        auth=auth, verify=OPENSTACK_SSL_CERT_FILE)
+    keystone = client.Client(
+        session=sess, )
     return keystone
 
 
@@ -82,7 +92,7 @@ def get_project(session, project_id):
         project = client.projects.get(project_id)
         return project
     except Exception as e:
-        print(e)
+        LOG.debug(e)
 
 
 def create_project(name: str, username: str, description: str, password: str):
@@ -101,7 +111,7 @@ def create_project(name: str, username: str, description: str, password: str):
             role.id,
             user=user.id,
             project=project.id)
-        print()
+        LOG.debug()
         session = get_user_session(
             username, password, project.id)
 
@@ -117,9 +127,9 @@ def delete_project(session, project_id):
     try:
         client = get_keystone_client_by_session(session)
         project = client.projects.delete(project_id)
-        print(project)
+        LOG.debug(project)
     except Exception as e:
-        print(e)
+        LOG.debug(e)
 
 
 def project_update(session, project, username, name=None, description=None,
@@ -141,7 +151,7 @@ def project_update(session, project, username, name=None, description=None,
     except keystone_exceptions.NotFound:
         raise NotFound('No project found with this Id')
     except Exception as e:
-        print(e)
+        LOG.debug(e)
 
 
 def openstack_user_init(email):
@@ -153,24 +163,24 @@ def openstack_user_init(email):
         3- grant member role to user for default project
         4- create network and router for project 
     """
-    print('openstack_user_init')
+    LOG.debug('openstack_user_init')
     admin_client = get_admin_keystone_client()
     founded_user = None
     try:
         founded_user = admin_client.users.find(name=email)
-    except:
-        pass
-    print('founded_user ', founded_user)
+    except Exception as e:
+        LOG.debug('Error when initiation of getting openstack user', e)
+    LOG.debug('founded_user ', founded_user)
     if founded_user:
         raise Exception('email was already exists in openstack')
     # project = create_project(
     #     'default', user['openstack_username'], 'Default project!')
     project = admin_client.projects.create(
         name=email+'_default', description='Default project!', domain='default', enabled=True)
-    print('openstack default project created ', project)
+    LOG.debug('openstack default project created ', project)
 
     user = create_openstack_user(email, admin_client, default_project=project)
-    print('openstack user create ', user['openstack_user_id'])
+    LOG.debug('openstack user create ', user['openstack_user_id'])
     role = admin_client.roles.list(name='member')[0]
     admin_client.roles.grant(
         role.id,
@@ -179,10 +189,11 @@ def openstack_user_init(email):
     session = get_user_session(
         user['openstack_username'], user['openstack_password'], project_id=project.id)
     net_id = create_network(project_name=project.name, session=session)
+    LOG.debug('network created for user', net_id)
     create_router(network_id=net_id,
                   project_name=project.name, session=session)
 
-    print(f"user granted project {project.id} ")
+    LOG.debug(f"user granted project {project.id} ")
 
     return {'openstack_username': user['openstack_username'],
             'openstack_password': user['openstack_password']}

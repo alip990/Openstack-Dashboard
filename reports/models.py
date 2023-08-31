@@ -13,6 +13,9 @@ class VirtualMachineServiceUsage(models.Model):
     vm = models.ForeignKey(to=VirtualMachineService, on_delete=models.CASCADE)
     usage_hours = models.FloatField(null=True, blank=True)
 
+    def __str__(self) -> str:
+        return self.vm
+
 #     password = models.CharField(max_length=255)
 #     email = models.CharField(max_length=255, unique=True)
 #     openstack_username = models.CharField(
@@ -48,7 +51,7 @@ RECORD_TYPE = (
 
 class InvoiceRecord(models.Model):
     invoice = models.ForeignKey(
-        'Invoice', related_name='invoice', on_delete=models.CASCADE)
+        'Invoice', related_name='invoice_record', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
     description = models.TextField()
     record_type = models.CharField(choices=RECORD_TYPE, max_length=255)

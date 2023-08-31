@@ -5,6 +5,9 @@ from .models import User
 from service.api.keystone import openstack_user_init, check_user_exist
 from django.core.exceptions import ValidationError
 # Register your models here.
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 class UserModelForm(forms.ModelForm):
@@ -47,7 +50,7 @@ class UserAdmin(admin.ModelAdmin):
         return ModelFormWithRequest
 
     def response_change(self, request, obj):
-        print('response_change')
+        LOG.debug('response_change')
         if '_create_openstack_user' in request.POST:
             user = openstack_user_init(str(obj))
             # raise ValidationError(vm.errors)

@@ -13,11 +13,9 @@ from reports.models import InvoiceRecord
 from django.db.models import Q
 
 now = timezone.now()
-print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
 
 
 def generate_user_invoice(user, start_date, end_date):
-    print('-------------------')
     # Get all virtual machine services of the user that have usage in the given date range
     vmservices = VirtualMachineService.objects.filter(
         (Q(user=user,
@@ -29,8 +27,6 @@ def generate_user_invoice(user, start_date, end_date):
                  virtualmachineserviceusage__usage_hours__isnull=True
                  ))
     ).distinct()
-    print(vmservices)
-    print('+++++++++')
 
  # Create an invoice for the user
     invoice = Invoice.objects.create(
@@ -43,20 +39,20 @@ def generate_user_invoice(user, start_date, end_date):
   # Create invoice records for each virtual machine service and aggregate usage
     records = []
     for vm in vmservices:
-        print("in vm")
-        print(vm)
+        LOG.debug("in vm")
+        LOG.debug(vm)
 
         # Aggregate usage for the virtual machine service in the date range
         vm_usages_not_ended = VirtualMachineServiceUsage.objects.filter(
             Q(vm=vm, start_date__gte=start_date,
               end_date__isnull=True, usage_hours__isnull=True)
         )
-        print("vm_usages_not_ended")
-        print(vm_usages_not_ended)
+        LOG.debug("vm_usages_not_ended")
+        LOG.debug(vm_usages_not_ended)
         # Update the end_date and calculate the usage_hours for each record
         for vm_usage in vm_usages_not_ended:
-            print("vm_usage")
-            print(vm_usages_not_ended)
+            LOG.debug("vm_usage")
+            LOG.debug(vm_usages_not_ended)
 
             vm_usage.end_date = now
             # Calculate the usage in hours
@@ -111,8 +107,7 @@ class Command(BaseCommand):
         # Loop through all users and calculate their invoice
         for user in User.objects.all():
             # Calculate the user's invoice for the previous month
-            print('***')
             generate_user_invoice(user, first_day, last_day)
-        # Print a success message
+        # LOG.debug a success message
         self.stdout.write(self.style.SUCCESS(
             'User invoices calculated successfully'))

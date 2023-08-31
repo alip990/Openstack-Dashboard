@@ -26,7 +26,8 @@ def on_vm_status_change(sender, instance: VirtualMachineService, **kwargs):
                 usage = VirtualMachineServiceUsage.objects.get(
                     vm_id=instance.id, end_date__isnull=True)
                 usage.end_date = datetime.now()
-                a = (usage.end_date - usage.start_date).total_seconds()
+                a = (usage.end_date - usage.start_date.replace(tzinfo=None)
+                     ).total_seconds()
                 usage.usage_hours = a/3600
                 usage.save()
 

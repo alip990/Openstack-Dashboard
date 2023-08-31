@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.serializers import ValidationError
 import logging
+from rest_framework.exceptions import APIException
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -149,7 +150,7 @@ class SnapShotView(APIView):
         snapshot = nova.snapshot_create(session, instance_id=vm_id, name=name)
         print("snapshot", snapshot)
 
-        return JsonResponse({'data': 'flavors'}, safe=False)
+        return JsonResponse({'data': {"id": snapshot}}, safe=False)
 
     def delete(self, request):
         project_id = request.GET.get('project_id', None)
@@ -174,8 +175,7 @@ class FlavorView(APIView):
         # user = User.objects.get(email=request.user)
         session = get_admin_session()
         flavors = get_flavor_list(session)
-        print(flavors)
-        print('flavors')
+        LOG.debug('flavors', flavors)
 
         return JsonResponse({'data': flavors}, safe=False)
 
@@ -188,7 +188,7 @@ class KeypairView(APIView):
         session = get_user_session(
             user.openstack_username, user.openstack_password)
         keypairs = get_keypair_list(session=session)
-        print('keypair', keypairs)
+        LOG.debug('keypair', keypairs)
         return JsonResponse({'data': keypairs}, safe=False)
 
     def post(self, request):
@@ -302,7 +302,7 @@ class VmOperationView(APIView):
         elif operation == "unpause" or operation == "start" or operation == "resume":
             vm.status = "ACTIVE"
         vm.save()
-        return Response(status=201)
+        return JsonResponse({'success': True}, safe=False)
 
 
 class VmConsoleView(APIView):
@@ -321,10 +321,15 @@ class VmConsoleView(APIView):
         user = User.objects.get(email=request.user)
         session = keystone.get_user_session(
             user.openstack_username, user.openstack_password, project_id)
-        vm = nova.server_get(session, instance_id=vm_id)
-        (con_type, console_url) = nova.get_console(
-            session, console_type="AUTO", instance=vm)
-        return JsonResponse({"data": {"con_type": con_type, "console_url": console_url}}, safe=False)
+        try:
+            vm = nova.server_get(session, instance_id=vm_id)
+
+            (con_type, console_url) = nova.get_console(
+                session, console_type="AUTO", instance=vm)
+            return JsonResponse({"data": {"con_type": con_type, "console_url": console_url}}, safe=False)
+
+        except Exception as e:
+            raise APIException('Console is not available for this machine')
 
 
 class VmSecurityGroupView(APIView):

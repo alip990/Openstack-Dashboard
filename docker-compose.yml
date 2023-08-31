@@ -34,5 +34,18 @@ services:
       - .:/home/application
     depends_on:
       - db
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger_ui_container
+    env_file:
+      - .env
+    ports:
+      - "81:8080"
+    volumes:
+      - ./doc:/usr/share/nginx/html/doc
+    environment:
+      API_URL: doc/openapi.yml
+      HOST_BASE_URL: "localhost"
+
 volumes:
   postgresqlData:
