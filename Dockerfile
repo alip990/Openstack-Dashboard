@@ -1,23 +1,26 @@
+# Use the Python 3 base image
 FROM python:3
 
-# ENV PYTHONDONTWRITEBYTECODE=1
-
-# ENV PYTHONUNBUFFERED=1
-
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-# ENV PATH=$PATH:/home/application/.local/bin
 
+# Create a user for running the application
 RUN useradd application
 
+# Set the working directory to /home/application
 WORKDIR /home/application
 
+# Change ownership of the /home/application directory to the application user
 RUN chown -R application:application /home/application
 
+# Switch to the application user
 USER application
 
+# Copy the application code and requirements.txt into the container
 COPY --chown=application:application . .
 
-RUN pip install -r requirements.txt  --user
+# Install the Python packages listed in requirements.txt
+RUN pip install -r requirements.txt
 
-# COPY . /code/
+# Your CMD or ENTRYPOINT command here
