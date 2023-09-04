@@ -7,7 +7,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PIP_NO_CACHE_DIR=true
 
 RUN apt update && \
-  apt install -y libpq-dev build-essential netcat cron
+  apt install -y libpq-dev build-essential cron
 
 # Create a user for running the application
 RUN useradd application
@@ -33,7 +33,7 @@ COPY --chown=application:application . .
 # Make sure Django is installed
 RUN python -m pip list 
 
-RUN python3.8 manage.py collectstatic --noinput
+RUN python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
 
