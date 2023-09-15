@@ -327,7 +327,7 @@ paths:
       security:
         - Bearer Token: []
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -368,7 +368,6 @@ paths:
                       type: string
                       description: URL to an image of the OS.
 
-
   /service/flavor/:
     get:
       summary: Get flavor list
@@ -376,7 +375,7 @@ paths:
       tags:
         - Flavor
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -455,7 +454,7 @@ paths:
                 type: string
                 description: The public key value for the keypair.
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -472,7 +471,7 @@ paths:
       security:
         - Bearer Token: []
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -525,7 +524,7 @@ paths:
                 type: integer
                 description: The number of instances to create.
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -541,7 +540,7 @@ paths:
       security:
         - Bearer Token: []
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -705,7 +704,7 @@ paths:
                   - soft_reboot
 
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -735,7 +734,7 @@ paths:
           required: true
           description: The unique identifier of the virtual machine instance.
       responses:
-        '200':
+        "200":
           description: OK
           schema:
             type: object
@@ -774,138 +773,190 @@ paths:
                   type: string
                   description: The name of the snapshot.
       responses:
-        '200':
+        "200":
           description: OK
 
     get:
-        summary: Get snapshots of a virtual machine instance
-        description: Retrieve snapshots of a virtual machine instance.
-        tags:
-          - Snap-shot
-        security:
-          - Bearer Token: []
-        parameters:
-          - name: project_id
-            in: query
-            required: true
-            description: The unique identifier of the project.
-            schema:
-              type: string
-          - name: virtual_machine_id
-            in: query
-            required: true
-            description: The unique identifier of the virtual machine instance.
-            schema:
-              type: string
-        responses:
-          '200':
-            description: OK
-            schema:
-                  type: object
-                  properties:
-                    owner:
-                      type: string
-                    is_public:
-                      type: boolean
-                    min_disk:
-                      type: integer
-                    protected:
-                      type: boolean
-                    created_at:
-                      type: string
-                      format: date-time
-                    architecture:
-                      type: string
-                    status:
-                      type: string
-                    disk_format:
-                      type: string
-                    size:
-                      type: integer
-                    visibility:
-                      type: string
-                    container_format:
-                      type: string
-                    updated_at:
-                      type: string
-                      format: date-time
-                    name:
-                      type: string
-                    min_ram:
-                      type: integer
-                    id:
-                      type: string
-                    checksum:
-                      type: string
-                    properties:
-                      type: object
-                      properties:
-                        photo:
-                          type: string
-                          format: uri
-                        os_version:
-                          type: string
-                        os_admin_user:
-                          type: string
-                        os_distro:
-                          type: string
-                        base_image_ref:
-                          type: string
-                        owner_user_name:
-                          type: string
-                        owner_project_name:
-                          type: string
-                        boot_roles:
-                          type: string
-                        hw_machine_type:
-                          type: string
-                        instance_uuid:
-                          type: string
-                        user_id:
-                          type: string
-                        image_type:
-                          type: string
-                        owner_id:
-                          type: string
-                        image_state:
-                          type: string
-                        image_location:
-                          type: string
-                        os_hidden:
-                          type: boolean
-                        os_hash_algo:
-                          type: string
-                        os_hash_value:
-                          type: string
-                        stores:
-                          type: string
+      summary: Get snapshots of a virtual machine instance
+      description: Retrieve snapshots of a virtual machine instance.
+      tags:
+        - Snap-shot
+      security:
+        - Bearer Token: []
+      parameters:
+        - name: project_id
+          in: query
+          required: true
+          description: The unique identifier of the project.
+          schema:
+            type: string
+        - name: virtual_machine_id
+          in: query
+          required: true
+          description: The unique identifier of the virtual machine instance.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              owner:
+                type: string
+              is_public:
+                type: boolean
+              min_disk:
+                type: integer
+              protected:
+                type: boolean
+              created_at:
+                type: string
+                format: date-time
+              architecture:
+                type: string
+              status:
+                type: string
+              disk_format:
+                type: string
+              size:
+                type: integer
+              visibility:
+                type: string
+              container_format:
+                type: string
+              updated_at:
+                type: string
+                format: date-time
+              name:
+                type: string
+              min_ram:
+                type: integer
+              id:
+                type: string
+              checksum:
+                type: string
+              properties:
+                type: object
+                properties:
+                  photo:
+                    type: string
+                    format: uri
+                  os_version:
+                    type: string
+                  os_admin_user:
+                    type: string
+                  os_distro:
+                    type: string
+                  base_image_ref:
+                    type: string
+                  owner_user_name:
+                    type: string
+                  owner_project_name:
+                    type: string
+                  boot_roles:
+                    type: string
+                  hw_machine_type:
+                    type: string
+                  instance_uuid:
+                    type: string
+                  user_id:
+                    type: string
+                  image_type:
+                    type: string
+                  owner_id:
+                    type: string
+                  image_state:
+                    type: string
+                  image_location:
+                    type: string
+                  os_hidden:
+                    type: boolean
+                  os_hash_algo:
+                    type: string
+                  os_hash_value:
+                    type: string
+                  stores:
+                    type: string
     delete:
-        summary: Delete snapshots for a virtual machine
-        tags:
-          - Snap-shot
-        parameters:
-          - in: query
-            name: project_id
-            required: true
-            description: ID of the project
-            schema:
-              type: string
-          - in: query
-            name: virtual_machine_id
-            required: false
-            description: ID of the virtual machine
-            schema:
-              type: string
-          - in: query
-            name: name
-            required: false
-            description: Name of the snapshot
-            schema:
-              type: string
-        responses:
-          '200':
-            description: OK
-              
+      summary: Delete snapshots for a virtual machine
+      tags:
+        - Snap-shot
+      parameters:
+        - in: query
+          name: project_id
+          required: true
+          description: ID of the project
+          schema:
+            type: string
+        - in: query
+          name: virtual_machine_id
+          required: false
+          description: ID of the virtual machine
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: Name of the snapshot
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+
+  /api/wallet:
+    get:
+      tags:
+        - Wallet
+      summary: "Retrieve user's wallet"
+      responses:
+        200:
+          description: "Successful response"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  address:
+                    type: "string"
+                  owner:
+                    type: "string"
+                  balance:
+                    type: "number"
+                required:
+                  - address
+                  - owner
+                  - balance
+
+  /wallet/wallet-transactions:
+    get:
+      tags:
+        - Wallet
+      summary: "Retrieve wallet transactions"
+      responses:
+        200:
+          description: "Successful response"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    related_wallet:
+                      type: "string"
+                    amount:
+                      type: "number"
+                    transaction_type:
+                      type: "string"
+                    description:
+                      type: "string"
+                required:
+                  - related_wallet
+                  - amount
+                  - transaction_typ
+
 tags:
   - name: Authentication
     description: APIs related to user authentication

@@ -61,9 +61,11 @@ INSTALLED_APPS = [
     # 'drf_spectacular',
     # 'drf_spectacular_sidecar',  # required for Django collectstatic discovery
     'rangefilter',
+
     'rest_framework',
     'corsheaders',
     'django_celery_beat',
+    'wallet',
     'users',
     'service.apps.ServiceConfig',
     'reports'

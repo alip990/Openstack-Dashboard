@@ -25,8 +25,8 @@ class BaseCreatedUpdatedTime(BaseCreatedTime):
 class Wallet(models.Model):
     address = models.UUIDField(
         _('آدرس کیف پول'), unique=True, null=False, blank=False, editable=False)
-    owner = models.OneToOneField(User, related_name=_(
-        'یوزرنیم مالک'), on_delete=models.CASCADE, null=False, db_index=True)
+    owner = models.OneToOneField(
+        User, related_name='wallet_owner', on_delete=models.CASCADE, null=False, db_index=True)
     balance = models.DecimalField(
         _('موجودی'), max_digits=20, decimal_places=3, default=0, null=False, blank=False)
 
@@ -59,8 +59,9 @@ class Wallet(models.Model):
         verbose_name = 'کیف پول'
         verbose_name_plural = 'کیف پول‌ها'
 
+
     def __str__(self):
-        return self.owner
+        return f"{self.owner.first_name} {self.owner.last_name}"
 
 
 class WalletTransactions(BaseCreatedTime):

@@ -1,8 +1,6 @@
 from django.db import models
 from django.db.models.signals import post_save, pre_save
 from users.models import User
-# Create your models here.
-# from service.signals import on_vm_status_change
 
 
 class Flavor(models.Model):
@@ -44,5 +42,3 @@ class VirtualMachineService(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-# pre_save.connect(on_vm_status_change, VirtualMachineService)

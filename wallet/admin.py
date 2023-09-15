@@ -1,7 +1,4 @@
-from django.contrib import admin
-
-# Register your models here.
-
+from django.contrib import messages
 from django.contrib import admin
 from wallet.models import *
 
@@ -29,6 +26,7 @@ class WalletTransactionInline(admin.StackedInline):
         return False
 
 
+@admin.register(Wallet)
 class WalletAdmin(admin.ModelAdmin):
     model = Wallet
     readonly_fields = ['balance']
@@ -40,14 +38,45 @@ class WalletAdmin(admin.ModelAdmin):
     ]
 
 
+@admin.register(WalletTransactions)
 class WalletTransactionAdmin(admin.ModelAdmin):
     model = WalletTransactions
-    list_display = ['related_wallet', 'amount',
-                    'transaction_type', ]
-    list_filter = ['transaction_type', ]
-    readonly_fields = ['related_wallet', 'amount',
-                       'transaction_type', 'related_bank_transaction', 'description']
+    list_display = ['related_wallet', 'amount', 'transaction_type']
+    list_filter = ['transaction_type']
+    # readonly_fields = ['related_wallet', 'amount',
+    #                    'transaction_type', 'description']
 
+    actions = None  # Disable all admin actions
 
-admin.site.register(Wallet, WalletAdmin)
-admin.site.register(WalletTransactions, WalletTransactionAdmin)
+    def save_model(self, request, obj, form, change):
+        # Check if the transaction type is 'withdraw'
+        if obj.transaction_type == 'withdraw':
+            # Check if the user has enough balance for the withdrawal
+            if obj.related_wallet.balance >= obj.amount:
+                # Deduct the amount from the user's balance
+                obj.related_wallet.balance -= obj.amount
+                obj.related_wallet.save()
+                obj.save()
+            else:
+                # User doesn't have enough balance, display a validation error
+                messages.error(request, "موجودی برای برداشت کافی نیست")
+        elif obj.transaction_type == 'deposit':
+            # For 'deposit' transactions, add the amount to the user's balance
+            obj.related_wallet.balance += obj.amount
+            obj.related_wallet.save()
+            obj.save()
+        else:
+            # Handle other transaction types as needed
+            obj.save
+
+    def has_add_permission(self, request):
+        # Allow creating new transactions, but disable editing or deleting
+        return True
+
+    def has_change_permission(self, request, obj=None):
+        # Disable editing existing transactions
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        # Disable deleting existing transactions
+        return False
