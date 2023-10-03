@@ -407,7 +407,7 @@ def get_server_list(session):
         "addresses": server.addresses,
         "created": server.created,
         "id": server.id,
-        # "image": get_image_by_id(server.image['id'], session),
+        "image": get_image_by_id(server.image['id'], session),
         "key_name": server.key_name,
         "metadata": server.metadata,
         "name": server.name,
