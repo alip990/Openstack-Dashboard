@@ -1,3 +1,4 @@
+redis==5.0.1
 amqp==5.1.1
 appdirs==1.4.4
 asgiref==3.5.2
@@ -79,7 +80,6 @@ python-neutronclient==8.2.0
 python-novaclient==18.1.0
 pytz==2022.5
 PyYAML==6.0
-redis==5.0.1
 requests==2.28.1
 requestsexceptions==1.4.0
 rfc3986==2.0.0
@@ -97,3 +97,4 @@ warlock==2.0.1
 wcwidth==0.2.5
 wrapt==1.14.1
 zipp==3.11.0
+
