@@ -36,7 +36,7 @@ djangorestframework-simplejwt==5.2.2
 dogpile.cache==1.1.8
 drf-spectacular==0.26.2
 idna==3.4
-importlib-metadata==6.0.0
+importlib-metadata==4.13.0
 inflection==0.5.1
 iso8601==1.1.0
 jmespath==1.0.1
