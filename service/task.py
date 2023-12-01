@@ -7,11 +7,11 @@ from celery import shared_task
 
 @shared_task
 def check_vm_status(total):
-    for i in range(total):
-        username = 'user_{}'.format(
-            get_random_string(10, string.ascii_letters))
-        email = '{}@example.com'.format(username)
-        password = get_random_string(50)
-        User.objects.create_user(
-            username=username, email=email, password=password)
+    # for i in range(total):
+    #     username = 'user_{}'.format(
+    #         get_random_string(10, string.ascii_letters))
+    #     email = '{}@example.com'.format(username)
+    #     password = get_random_string(50)
+    #     User.objects.create_user(
+    #         username=username, email=email, password=password)
     return '{} random users created with success!'.format(total)

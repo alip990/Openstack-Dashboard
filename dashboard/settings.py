@@ -60,16 +60,23 @@ INSTALLED_APPS = [
     'admin_numeric_filter',
     # 'drf_spectacular',
     # 'drf_spectacular_sidecar',  # required for Django collectstatic discovery
+    "django_celery_results",
     'rangefilter',
-
     'rest_framework',
     'corsheaders',
     'django_celery_beat',
     'wallet',
     'users',
     'service.apps.ServiceConfig',
-    'reports'
+    'reports.apps.ReportsConfig'
 ]
+
+CELERY_BROKER_URL = f"redis://{os.environ.get('REDIS_HOST')}:{os.environ.get('REDIS_PORT')}"
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_TIMEZONE = 'Asia/Tehran'
 
 
 MIDDLEWARE = [

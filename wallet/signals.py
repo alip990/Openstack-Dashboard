@@ -11,7 +11,6 @@ def create_user_wallet(sender, instance, created, **kwargs):
     """
     Signal handler to create a wallet for the user when a new user is created.
     """
-    print('------------------------ssssssssss-------')
     if created:
         # Check if a wallet doesn't already exist for the user
         if not hasattr(instance, 'wallet'):

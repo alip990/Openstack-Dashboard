@@ -12,11 +12,10 @@ LOG = logging.getLogger(__name__)
 
 class InvoiceListAPIView(generics.ListAPIView):
     serializer_class = InvoiceSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # user_email = self.request.user
-        user_email = 'ali@gmail.com'
+        user_email = self.request.user
         start_time = self.request.query_params.get('start_time')
         end_time = self.request.query_params.get('end_time')
 
@@ -33,10 +32,6 @@ class InvoiceListAPIView(generics.ListAPIView):
             for record in invoice.invoice_record.all():
                 LOG.debug(record)
             LOG.debug()
-
-     # # Filter by user_id if provided
-     # if user_email:
-     #     queryset = queryset.filter(user__email=user_email)
 
      # Filter by start_time if provided
         if start_time:

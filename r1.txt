@@ -66,7 +66,7 @@ psycopg2==2.9.5
 pycodestyle==2.9.1
 pycparser==2.21
 pyinotify==0.9.6
-PyJWT==1.7.1
+PyJWT==2.6.0
 pyOpenSSL==22.1.0
 pyparsing==3.0.9
 pyperclip==1.8.2

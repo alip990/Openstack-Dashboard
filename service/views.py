@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-from rest_framework.serializers import ValidationError
+from rest_framework.serializers import ValidationError 
 import logging
 from rest_framework.exceptions import APIException
 
@@ -16,7 +16,7 @@ from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer, Sec
 # Create your views here.
 from users.models import User
 from service.models import VirtualMachineService
-
+from wallet.models import Wallet
 LOG = logging.getLogger(__name__)
 
 
@@ -145,6 +145,10 @@ class SnapShotView(APIView):
             raise ValidationError(
                 'you should provide virtual_machine_id in body')
         user = User.objects.get(email=request.user)
+        user_wallet= Wallet.objects.get(owner = user.id)
+        if(user_wallet.balance <= 0):
+                raise APIException("Your wallet balance is not enough, contact supports")
+
         session = keystone.get_user_session(
             user.openstack_username, user.openstack_password, project_id)
         snapshot = nova.snapshot_create(session, instance_id=vm_id, name=name)
@@ -212,6 +216,10 @@ class VmView(APIView):
         vm = VmSerializer(data=request.data)
         if vm.is_valid():
             user = User.objects.get(email=request.user)
+            user_wallet= Wallet.objects.get(owner = user.id)
+            if(user_wallet.balance <= 0):
+                raise APIException("Your wallet balance is not enough, contact supports")
+
             session = get_user_session(
                 user.openstack_username,
                 user.openstack_password,
@@ -223,6 +231,7 @@ class VmView(APIView):
             #                        session
             #                        )
             data = vm.validated_data
+
             server = nova.server_create(session=session, name=data['name'],
                                         key_name=data['keypair_id'],
                                         image_id=data['image_id'],
@@ -280,8 +289,6 @@ class VmOperationView(APIView):
                 'virtual_machine_id should be provided in query param')
 
         user = User.objects.get(email=request.user)
-        session = get_user_session(
-            user.openstack_username, user.openstack_password, project_id)
 
         operation = request.data.get('operation', None)
         operations = {
@@ -294,6 +301,13 @@ class VmOperationView(APIView):
             'hard_reboot': lambda r, s: nova.server_reboot(r, s, False),
             'soft_reboot': lambda r, s: nova.server_reboot(r, s, True),
         }
+        if(operation == "start" or operation == "resume" ):
+            user_wallet= Wallet.objects.get(owner = user.id)
+            if(user_wallet.balance <= 0):
+                raise APIException("Your wallet balance is not enough, contact supports")
+        
+        session = get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
         vm = VirtualMachineService.objects.filter(
             openstack_id__contains=virtual_machine_id).order_by('-created_at')[0]
         operations[operation](session, virtual_machine_id)
@@ -323,9 +337,8 @@ class VmConsoleView(APIView):
             user.openstack_username, user.openstack_password, project_id)
         try:
             vm = nova.server_get(session, instance_id=vm_id)
-
             (con_type, console_url) = nova.get_console(
-                session, console_type="AUTO", instance=vm)
+                session, console_type="SPICE", instance=vm)
             return JsonResponse({"data": {"con_type": con_type, "console_url": console_url}}, safe=False)
 
         except Exception as e:

@@ -14,26 +14,32 @@ services:
     volumes:
       - "postgresqlData:/var/lib/postgresql/data"
   web:
-    # environment:
-    #   - DEBUG_MODE=true
-    #   - POSTGRES_DB=postgres
-    #   - POSTGRES_USER=postgres
-    #   - POSTGRES_PASSWORD=postgres
-    #   - POSTGRES_PORT=5432
-    #   - POSTGRES_HOST=db
-    #   - ALLOWED_HOSTS=*
     env_file:
       - ./.env
+    entrypoint: ./entrypoint.sh
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/home/application
     depends_on:
       - db
+
+  web_celery:
+    # entrypoint: ./entrypoint.sh
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    command: celery -A dashboard.celery beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/home/application
+
   swagger-ui:
     image: swaggerapi/swagger-ui
     container_name: swagger_ui_container
@@ -46,6 +52,8 @@ services:
     environment:
       API_URL: doc/openapi.yml
       HOST_BASE_URL: "localhost"
+  redis:
+    image: redis:latest
 
 volumes:
   postgresqlData:

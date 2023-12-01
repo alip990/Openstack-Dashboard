@@ -59,7 +59,6 @@ class Wallet(models.Model):
         verbose_name = 'کیف پول'
         verbose_name_plural = 'کیف پول‌ها'
 
-
     def __str__(self):
         return f"{self.owner.first_name} {self.owner.last_name}"
 
@@ -76,6 +75,8 @@ class WalletTransactions(BaseCreatedTime):
     transaction_type = models.CharField(_('نوع تراکتش'), max_length=10, blank=False, null=False, default='deposit',
                                         choices=TYPE)
     description = models.TextField(_('شرح'), blank=True, null=True)
+    created_at = models.DateTimeField(
+        verbose_name='تاریخ ایجاد', auto_now_add=True, )
 
     def __str__(self):
         return self.description or ''

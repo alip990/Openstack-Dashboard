@@ -911,52 +911,74 @@ paths:
         - Wallet
       summary: "Retrieve user's wallet"
       responses:
-        200:
-          description: "Successful response"
-          content:
-            application/json:
-              schema:
-                type: "object"
-                properties:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
                   address:
                     type: "string"
                   owner:
                     type: "string"
                   balance:
                     type: "number"
-                required:
-                  - address
-                  - owner
-                  - balance
 
   /wallet/wallet-transactions:
     get:
       tags:
         - Wallet
       summary: "Retrieve wallet transactions"
+      parameters:
+        - name: transaction_type
+          in: query
+          description: Type of the transaction (deposit or withdraw)
+          required: false
+          schema:
+            type: string
+        - name: start_date
+          in: query
+          description: Start date for the transaction creation date filter (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+          format: date
+        - name: end_date
+          in: query
+          description: End date for the transaction creation date filter (YYYY-MM-DD)
+          required: false
+          schema:
+            type: string
+          format: date
+        - name: order
+          in: query
+          description: Order of the transactions sorted by creation date (asc or desc)
+          required: false
+          schema:
+            type: string
       responses:
-        200:
-          description: "Successful response"
-          content:
-            application/json:
-              schema:
-                type: "array"
-                items:
-                  type: "object"
-                  properties:
-                    related_wallet:
-                      type: "string"
-                    amount:
-                      type: "number"
-                    transaction_type:
-                      type: "string"
-                    description:
-                      type: "string"
-                required:
-                  - related_wallet
-                  - amount
-                  - transaction_typ
-
+        "200":
+          description: OK
+          schema:
+            type: "array"
+            items:
+              type: "object"
+              properties:
+                related_wallet:
+                  type: "string"
+                amount:
+                  type: "number"
+                transaction_type:
+                  type: "string"
+                description:
+                  type: "string"
+                created_at:
+                  type: "string"
+                  format: "date-time"
+            required:
+              - related_wallet
+              - amount
+              - transaction_type
+              - created_at
 tags:
   - name: Authentication
     description: APIs related to user authentication

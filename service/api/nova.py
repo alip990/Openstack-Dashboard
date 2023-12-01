@@ -74,7 +74,7 @@ def server_spice_console(session, instance_id, console_type='spice-html5'):
     nc = _nova.novaclient(session)
     console = nc.servers.get_spice_console(instance_id, console_type)
 
-    return SPICEConsole(console['console'])
+    return SPICEConsole(console)
 
 
 def server_rdp_console(session, instance_id, console_type='rdp-html5'):
@@ -92,7 +92,7 @@ def server_serial_console(session, instance_id, console_type='serial'):
 def server_mks_console(session, instance_id, console_type='mks'):
     microver = get_microversion(session, "remote_console_mks")
     nc = _nova.novaclient(session, microver)
-    console = nc.servers.get_mks_console(instance_id, console_type)
+    console = nc.servers.get_mks_console(instance_id)
 
     return MKSConsole(console['remote_console'])
 
@@ -101,7 +101,8 @@ CONSOLES = OrderedDict([('VNC', server_vnc_console),
                        ('SPICE', server_spice_console),
                        ('RDP', server_rdp_console),
                        ('SERIAL', server_serial_console),
-                       ('MKS', server_mks_console)])
+                       ('MKS', server_mks_console)
+                        ])
 
 
 def get_console(session, console_type, instance):
@@ -123,7 +124,10 @@ def get_console(session, console_type, instance):
         httpnotimplemented = nova_exception.HTTPNotImplemented
     for con_type, api_call in check_consoles.items():
         try:
+            # console = server_mks_console(session, instance.id)
+
             console = api_call(session, instance.id)
+
         # If not supported, don't log it to avoid lot of errors in case
         # of AUTO.
         except httpnotimplemented:
@@ -134,6 +138,9 @@ def get_console(session, console_type, instance):
 
         if con_type == 'SERIAL':
             console_url = console.url
+        elif con_type == 'SPICE':
+            console_url = console.get('remote_console')['url']
+
         else:
             console_url = "%s&%s(%s)" % (
                           console.url,
