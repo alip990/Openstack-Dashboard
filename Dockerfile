@@ -1,5 +1,5 @@
 # Use the Python 3 base image
-FROM python:3
+FROM python:3.8
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -19,14 +19,14 @@ COPY  requirements.txt .
 
 
 # Install Python packages from requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY  . .
 
 # Make sure Django is installed
 RUN python -m pip list 
 
-RUN python3 manage.py collectstatic --noinput
+# RUN python3 manage.py collectstatic --noinput
 
 EXPOSE 8000
 
