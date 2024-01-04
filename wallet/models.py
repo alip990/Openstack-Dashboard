@@ -84,3 +84,19 @@ class WalletTransactions(BaseCreatedTime):
     class Meta:
         verbose_name = 'تراکنش کیف پول'
         verbose_name_plural = 'تراکنش‌های کیف پول'
+
+
+class UserWalletRequest(models.Model):
+    user_id = models.OneToOneField(
+        User, on_delete=models.CASCADE, null=False, db_index=True)
+    amount = models.DecimalField(_("مبلغ"), max_digits=10, decimal_places=2)
+    description = models.TextField(_("توضیحات"))
+    photo = models.ImageField(_("عکس"), upload_to='wallet_requests/', blank=True, null=True)
+    is_admin_approved = models.BooleanField(_("تایید شده توسط مدیر"), default=False)
+
+    class Meta:
+        verbose_name = _("درخواست کیف پول کاربر")
+        verbose_name_plural = _("درخواست‌های کیف پول کاربران")
+
+    def __str__(self):
+        return f"{self.user_id} - {self.amount} - {self.is_admin_approved}"

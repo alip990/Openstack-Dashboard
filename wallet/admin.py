@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib import admin
 from wallet.models import *
+from django.utils.translation import gettext_lazy as _
 
 
 class WalletTransactionInline(admin.StackedInline):
@@ -79,4 +80,25 @@ class WalletTransactionAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         # Disable deleting existing transactions
+        return False
+
+
+@admin.register(UserWalletRequest)
+class UserWalletRequestAdmin(admin.ModelAdmin):
+    list_display = ('user_id', 'amount', 'description', 'is_admin_approved')
+    list_filter = ('is_admin_approved', )
+    search_fields = ('user_id', 'amount', 'description')
+    readonly_fields = ('user_id', 'amount', 'description', 'photo', 'is_admin_approved')
+
+    fieldsets = (
+        (_("اطلاعات کاربر"), {
+            'fields': ('user_id',)
+        }),
+        (_("جزئیات درخواست"), {
+            'fields': ('amount', 'description', 'photo', 'is_admin_approved')
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Disable the ability to add new UserWalletRequest instances via the admin
         return False

@@ -979,6 +979,89 @@ paths:
               - amount
               - transaction_type
               - created_at
+  /wallet/user-requests/:
+    get:
+      summary: Retrieve user's wallet requests
+      tags:
+        - Wallet
+      security:
+        - Bearer Token: []
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: The unique identifier of the wallet request
+                user_id:
+                  type: integer
+                  description: The user ID associated with the wallet request
+                amount:
+                  type: number
+                  description: The amount of the wallet request
+                description:
+                  type: string
+                  description: The description of the wallet request
+                photo:
+                  type: string
+                  description: URL to the photo uploaded for the wallet request
+                is_admin_approved:
+                  type: boolean
+                  description: Indicates whether the wallet request is approved by the admin
+    post:
+      summary: Create a new wallet request
+      tags:
+        - Wallet
+      security:
+        - Bearer Token: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: The user ID associated with the wallet request
+                amount:
+                  type: number
+                  description: The amount of the wallet request
+                description:
+                  type: string
+                  description: The description of the wallet request
+                photo:
+                  type: string
+                  description: URL to the photo uploaded for the wallet request
+      responses:
+        "201":
+          description: Created
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+                description: The unique identifier of the wallet request
+              user_id:
+                type: integer
+                description: The user ID associated with the wallet request
+              amount:
+                type: number
+                description: The amount of the wallet request
+              description:
+                type: string
+                description: The description of the wallet request
+              photo:
+                type: string
+                description: URL to the photo uploaded for the wallet request
+              is_admin_approved:
+                type: boolean
+                description: Indicates whether the wallet request is approved by the admin
+
 tags:
   - name: Authentication
     description: APIs related to user authentication
