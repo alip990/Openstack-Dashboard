@@ -147,7 +147,7 @@ class SnapShotView(APIView):
         user = User.objects.get(email=request.user)
         user_wallet= Wallet.objects.get(owner = user.id)
         if(user_wallet.balance <= 0):
-                raise APIException("Your wallet balance is not enough, contact supports")
+                raise ValidationError("Your wallet balance is not enough, contact supports")
 
         session = keystone.get_user_session(
             user.openstack_username, user.openstack_password, project_id)
@@ -304,7 +304,7 @@ class VmOperationView(APIView):
         if(operation == "start" or operation == "resume" ):
             user_wallet= Wallet.objects.get(owner = user.id)
             if(user_wallet.balance <= 0):
-                raise APIException("Your wallet balance is not enough, contact supports")
+                raise ValidationError("Your wallet balance is not enough, contact supports")
         
         session = get_user_session(
             user.openstack_username, user.openstack_password, project_id)
