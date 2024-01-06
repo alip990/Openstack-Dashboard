@@ -87,8 +87,8 @@ class WalletTransactions(BaseCreatedTime):
 
 
 class UserWalletRequest(models.Model):
-    user_id = models.OneToOneField(
-        User, on_delete=models.CASCADE, null=False, db_index=True)
+    user_id = models.ForeignKey(
+        to=User, on_delete=models.CASCADE , null=False)
     amount = models.DecimalField(_("مبلغ"), max_digits=10, decimal_places=2)
     description = models.TextField(_("توضیحات"))
     photo = models.ImageField(_("عکس"), upload_to='wallet_requests/', blank=True, null=True)
