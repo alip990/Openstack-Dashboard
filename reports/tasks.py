@@ -8,7 +8,7 @@ from dashboard.celery import app
 from django_celery_beat.models import CrontabSchedule , PeriodicTask
 
 
-@app.on_after_finalize.connect
+@app.on_after_finalize.connect()
 def setup_periodic_tasks(sender, **kwargs):
     
     schedule, created = CrontabSchedule.objects.get_or_create(
@@ -41,7 +41,7 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
 
-@app.task
+@app.task()
 def generate_user_invoices():
   generate_all_users_invoice_within_month()
 
