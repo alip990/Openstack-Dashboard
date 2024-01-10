@@ -75,6 +75,11 @@ class UserWalletRequestListView(APIView):
         if serializer.is_valid():
             # Set the user_id to the current user before saving
             serializer.validated_data['user_id'] = User.objects.get(id=request.user.id)
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            instance = serializer.save()
+
+            # Explicitly call to_representation to include the photo URL in the response
+            response_data = serializer.to_representation(instance)
+
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
