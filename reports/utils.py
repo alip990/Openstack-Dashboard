@@ -41,9 +41,6 @@ def generate_user_invoice(user, start_date, end_date):
   # Create invoice records for each virtual machine service and aggregate usage
     records = []
     for vm in vmservices:
-        LOG.debug("in vm")
-        LOG.debug(vm)
-
         # Aggregate usage for the virtual machine service in the date range
         vm_usages_not_ended = VirtualMachineServiceUsage.objects.filter(
             Q(vm=vm, start_date__gte=start_date,
@@ -104,6 +101,7 @@ def generate_all_users_invoice_within_month():
     first_day = today.replace(day=1) - timedelta(days=1)
     last_day = first_day.replace(day=1) #todo
     # Loop through all users and calculate their invoice
+    print('start calculating user invoices ')
     for user in User.objects.all():
         # Calculate the user's invoice for the previous month
         generate_user_invoice(user, first_day, last_day)

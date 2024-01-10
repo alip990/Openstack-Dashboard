@@ -86,7 +86,7 @@ class WalletTransactions(BaseCreatedTime):
         verbose_name_plural = 'تراکنش‌های کیف پول'
 
 
-class UserWalletRequest(models.Model):
+class UserWalletRequest(BaseCreatedUpdatedTime):
     user_id = models.ForeignKey(
         to=User, on_delete=models.CASCADE , null=False)
     amount = models.DecimalField(_("مبلغ"), max_digits=10, decimal_places=2)
@@ -95,8 +95,8 @@ class UserWalletRequest(models.Model):
     is_admin_approved = models.BooleanField(_("تایید شده توسط مدیر"), default=False)
 
     class Meta:
-        verbose_name = _("درخواست کیف پول کاربر")
-        verbose_name_plural = _("درخواست‌های کیف پول کاربران")
+        verbose_name = _("درخواست افزایش شارژ کیف پول کاربر")
+        verbose_name_plural = _("درخواست افزایش شارژ کیف پول کاربران")
 
     def __str__(self):
         return f"{self.user_id} - {self.amount} - {self.is_admin_approved}"

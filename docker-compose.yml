@@ -60,8 +60,12 @@ services:
     environment:
       API_URL: doc/openapi.yml
       HOST_BASE_URL: "localhost"
+      
   redis:
     image: redis:latest
+    networks:
+      - backend
+
 
 volumes:
   postgresqlData:

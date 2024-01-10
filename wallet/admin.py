@@ -85,10 +85,10 @@ class WalletTransactionAdmin(admin.ModelAdmin):
 
 @admin.register(UserWalletRequest)
 class UserWalletRequestAdmin(admin.ModelAdmin):
-    list_display = ('user_id', 'amount', 'description', 'is_admin_approved')
+    list_display = ('user_id', 'amount', 'description', 'is_admin_approved' , 'created_time','updated_time')
     list_filter = ('is_admin_approved', )
     search_fields = ('user_id', 'amount', 'description')
-    readonly_fields = ('user_id', 'amount', 'description', 'photo', 'is_admin_approved')
+    readonly_fields = ('user_id', 'amount', 'description', 'photo','created_time','updated_time')
 
     fieldsets = (
         (_("اطلاعات کاربر"), {
@@ -101,4 +101,4 @@ class UserWalletRequestAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         # Disable the ability to add new UserWalletRequest instances via the admin
-        return False
+        return True
