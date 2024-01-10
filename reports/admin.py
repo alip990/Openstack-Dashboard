@@ -33,25 +33,23 @@ class VirtualMachineServiceUsageAdmin(admin.ModelAdmin):
     ]
     list_filter = [('usage_hours', RangeNumericFilter), ]
 
+class InvoiceRecordInline(admin.TabularInline):  # or admin.StackedInline for a different layout
+    model = InvoiceRecord
+    extra = 1  # Number of empty forms to display
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
     list_display = ['user', 'end_date', 'start_date', 'total_amount']
-    list_filter = (
+    list_filter = [
         ('end_date', DateRangeFilter),
         ('start_date', DateTimeRangeFilter),
         UserFilter,
-        ('user', RelatedOnlyFieldListFilter)
-    )
-    list_filter = [('total_amount', RangeNumericFilter), ]
-
+        ('user', RelatedOnlyFieldListFilter),
+        ('total_amount', RangeNumericFilter),
+    ]
+    inlines = [InvoiceRecordInline]
 
 @admin.register(InvoiceRecord)
 class InvoiceRecordAdmin(admin.ModelAdmin):
-    list_display = ['name',
-                    'description',
-                    'record_type',
-                    'usage',
-                    'unit_price'
-                    ]
-    list_filter = ['record_type', ('usage', RangeNumericFilter), ]
+    list_display = ['name', 'description', 'record_type', 'usage', 'unit_price']
+    list_filter = ['record_type', ('usage', RangeNumericFilter)]

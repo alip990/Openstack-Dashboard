@@ -41,12 +41,25 @@ services:
       - ./.env
     depends_on:
       - db
-    command: celery -A dashboard.celery beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A dashboard.celery  beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/home/application
     networks:
       - backend
 
+  web_celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    depends_on:
+      - db
+    command: celery -A dashboard.celery worker -l INFO
+    volumes:
+      - .:/home/application
+    networks:
+      - backend
 
   swagger-ui:
     image: swaggerapi/swagger-ui
@@ -60,7 +73,7 @@ services:
     environment:
       API_URL: doc/openapi.yml
       HOST_BASE_URL: "localhost"
-      
+
   redis:
     image: redis:latest
     networks:

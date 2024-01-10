@@ -6,6 +6,9 @@ from reports.utils import generate_all_users_invoice_within_month
 from dashboard.celery import app
 
 from django_celery_beat.models import CrontabSchedule , PeriodicTask
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 @app.on_after_finalize.connect()
