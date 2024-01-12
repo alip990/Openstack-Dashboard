@@ -1,6 +1,41 @@
 from rest_framework import serializers
 
 
+from rest_framework import serializers
+from .models import Flavor
+
+class FlavorSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(source='id', read_only=True)
+    cpu = serializers.SerializerMethodField()
+    ram = serializers.SerializerMethodField()
+    name = serializers.CharField(source='name')
+    disk = serializers.SerializerMethodField()
+    ratings = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Flavor
+        fields = ['id', 'name', 'cpu', 'ram', 'disk', 'ratings']
+
+    def get_cpu(self, flavor):
+        return {"size": flavor.cpu_core, 'unit': 'core'}
+
+    def get_ram(self, flavor):
+        return {"size": flavor.ram, 'unit': 'mb'}
+
+    def get_disk(self, flavor):
+        return {"size": flavor.disk, 'unit': 'Gb'}
+
+    def get_ratings(self, flavor):
+        hourly_rating = int(flavor.rating_per_hour)
+        daily_rating = hourly_rating * 24
+        monthly_rating = daily_rating * 30  
+
+        return {
+            "monthly": monthly_rating,
+            "daily": daily_rating,
+            "hourly": hourly_rating
+        }
+
 class KeypairSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200)
     public_key = serializers.CharField(required=False, default=None)

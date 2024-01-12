@@ -15,8 +15,9 @@ from service.api.nova import get_flavor_list, get_keypair_list, create_keypair, 
 from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer, SecurityGroupRuleSerializer
 # Create your views here.
 from users.models import User
-from service.models import VirtualMachineService
+from service.models import VirtualMachineService ,Flavor
 from wallet.models import Wallet
+from service.serializers import FlavorSerializer
 LOG = logging.getLogger(__name__)
 
 
@@ -171,17 +172,18 @@ class SnapShotView(APIView):
         glance.image_delete(session, image_id=snapshot_id)
         return JsonResponse({'success': True}, safe=False)
 
-
 class FlavorView(APIView):
     # permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # user = User.objects.get(email=request.user)
-        session = get_admin_session()
-        flavors = get_flavor_list(session)
-        LOG.debug('flavors', flavors)
+        # Retrieve non-deleted flavors from the database using the Flavor model
+        flavors = Flavor.objects.filter(is_deleted=False)
 
-        return JsonResponse({'data': flavors}, safe=False)
+        # Serialize the flavors using FlavorSerializer
+        serializer = FlavorSerializer(flavors, many=True)
+
+        # Return the serialized data as JSON response
+        return Response({'data': serializer.data})
 
 
 class KeypairView(APIView):
