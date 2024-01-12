@@ -190,25 +190,43 @@ class KeypairView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        # Retrieve the user based on the request's user email
         user = User.objects.get(email=request.user)
-        session = get_user_session(
-            user.openstack_username, user.openstack_password)
+        
+        # Get the user's OpenStack session and fetch the keypairs
+        session = get_user_session(user.openstack_username, user.openstack_password)
         keypairs = get_keypair_list(session=session)
-        LOG.debug('keypair', keypairs)
+
+        # Log the retrieved keypairs for debugging purposes
+        LOG.debug('Retrieved keypairs:', keypairs)
+
+        # Return the keypairs as a JSON response
         return JsonResponse({'data': keypairs}, safe=False)
 
     def post(self, request):
-        k = KeypairSerializer(data=request.data)
-        if k.is_valid():
+        # Deserialize the request data using the KeypairSerializer
+        keypair_serializer = KeypairSerializer(data=request.data)
+
+        if keypair_serializer.is_valid():
+            # Retrieve the user based on the request's user email
             user = User.objects.get(email=request.user)
-            session = get_user_session(
-                user.openstack_username, user.openstack_password)
-            keypair = create_keypair(k.validated_data.get('name'),
-                                     k.validated_data.get('public_key'), session)
+
+            # Get the user's OpenStack session
+            session = get_user_session(user.openstack_username, user.openstack_password)
+
+            # Create a new keypair using the provided data
+            keypair = create_keypair(
+                keypair_serializer.validated_data.get('name'),
+                keypair_serializer.validated_data.get('public_key'),
+                session
+            )
+
+            # Return the created keypair details as a JSON response
+            return JsonResponse({'name': keypair.name, 'public_key': keypair.public_key})
 
         else:
-            raise ValidationError(k.errors)
-        return JsonResponse({'name': keypair.name, 'public_key': keypair.public_key})
+            # If the serializer is not valid, raise a validation error and return the errors
+            raise ValidationError(keypair_serializer.errors)
 
 
 class VmView(APIView):
@@ -226,12 +244,6 @@ class VmView(APIView):
                 user.openstack_username,
                 user.openstack_password,
                 project_id=vm.validated_data.get('project_id'))
-            # server = create_server(vm.validated_data.get('name'),
-            #                        vm.validated_data.get('flavor_id'),
-            #                        vm.validated_data.get('image_id'),
-            #                        vm.validated_data.get('keypair_id'),
-            #                        session
-            #                        )
             data = vm.validated_data
 
             server = nova.server_create(session=session, name=data['name'],
@@ -247,8 +259,6 @@ class VmView(APIView):
             LOG.debug(f'flavor{flavor}')
 
 
-# {'id': '2', 'cpu': {'size': 1, 'unit': 'core'}, 'ram': {'size': 2048, 'unit': 'mb'}, 'name': 'm1.small',
-#     'disk': {'size': 20, 'unit': 'Gb'}, 'ratings': {'monthly': 379929600, 'daily': 12664320, 'hourly': 527680}}
             VirtualMachineService.objects.create(openstack_id=server.id,
                                                  name=server.name,
                                                  status="ACTIVE",
