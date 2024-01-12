@@ -109,7 +109,4 @@ def generate_all_users_invoice_within_month():
     for user in User.objects.all():
         # Calculate the user's invoice for the previous month
         generate_user_invoice(user, first_day, last_day)
-        # LOG.debug a success message
-    self.stdout.write(self.style.SUCCESS(
-        'User invoices calculated successfully'))
 

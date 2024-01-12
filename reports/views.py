@@ -31,7 +31,6 @@ class InvoiceListAPIView(generics.ListAPIView):
             LOG.debug("Invoice Records:")
             for record in invoice.invoice_record.all():
                 LOG.debug(record)
-            LOG.debug()
 
      # Filter by start_time if provided
         if start_time:
