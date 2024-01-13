@@ -34,7 +34,46 @@ sudo apt-get update
 ```bash
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
+4. Install Docker compose
+    ```bash
+    sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 
+    sudo chmod +x /usr/local/bin/docker-compose
+
+    docker-compose --version
+
+    ```
+5. change Docker registery to pass 403 of docker
+```bash
+sudo nano /etc/docker/daemon.json
+
+```
+And pase below text into nano
+```
+{
+"registry-mirrors": ["https://registry.docker.ir"]
+}
+```
+Then run 
+```bash
+systemctl daemon-reload
+systemctl restart docker
+
+```
+Or use this way if above command not work
+
+```bash
+sudo bash -c 'cat > /etc/docker/daemon.json <<EOF
+{
+  "insecure-registries" : ["https://docker.arvancloud.ir"],
+  "registry-mirrors": ["https://docker.arvancloud.ir"]
+}
+EOF'
+```
+```bash
+docker logout
+sudo systemctl restart docker
+```
 ### Clone Project
     ```bash
     git clone <repository_url>
@@ -52,7 +91,7 @@ you should create .env file from .env.example and configure the project.
 
 ### create admin user
     ```bash
-    docker-compose exec wep sh
+    docker-compose exec web sh
     python manage.py createsuperuser
     ```
 
