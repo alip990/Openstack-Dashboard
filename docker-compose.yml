@@ -67,17 +67,14 @@ services:
       - backend
 
   swagger-ui:
-    image: swaggerapi/swagger-ui
-    container_name: swagger_ui
-    env_file:
-      - .env
-    ports:
-      - "8001:8080"
-    volumes:
+   image: swaggerapi/swagger-ui
+   container_name: swagger_ui
+   ports:
+      - "81:8080"
+   volumes:
       - ./doc:/usr/share/nginx/html/doc
-    environment:
+   environment:
       API_URL: doc/openapi.yml
-      HOST_BASE_URL: "localhost"
 
   redis:
     image: redis:latest

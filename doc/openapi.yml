@@ -151,10 +151,7 @@ paths:
         This API allows you to update project details, making it easier for your teammates to collaborate and work effectively. Provide the project ID and the updated information in the request body to modify the project.
 
         **Authorization:**
-        This API requires a valid access token to be included in the request header using the Bearer token authentication scheme.
-
-        **Path Variables:**
-        - `project_id`: The unique identifier of the project to be updated.
+        This API requires a vserviced access token to be included in the request header using the Bearer token authentication scheme.
 
         **Request Body:**
         The request body should be a JSON object containing the following properties:
@@ -169,6 +166,13 @@ paths:
         - `name`: (string) The updated name of the project.
         - `description`: (string) The updated description of the project.
         - `id`: (string) The unique identifier of the project.
+
+      parameters:
+        - name: project_id
+          in: path
+          description: The unique identifier of the project to be updated.
+          required: true
+          type: string
 
       responses:
         "200":
@@ -192,16 +196,17 @@ paths:
         This API allows you to delete a project to make your workspace more organized and suitable for your teammates. To delete a project, provide the project ID in the request path.
 
         **Authorization:**
-        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
-
-        **Path Variables:**
-        - `project_id`: The unique identifier of the project to be deleted.
-
-        **Example:**
-        Delete the project with the ID "2679ba7aabc7418092f76bcdce39141f".
+        To use this API, you need to provide a vserviced access token in the request header using the Bearer authentication method.
 
         **Response:**
         This request does not return a response body.
+
+      parameters:
+        - name: project_id
+          in: path
+          description: The unique identifier of the project to be deleted.
+          required: true
+          type: string
 
       responses:
         "204":
@@ -216,16 +221,17 @@ paths:
         This API allows you to retrieve the details of a specific project, making it easier for your teammates to access relevant information. To get the details of a project, provide the project ID in the request path.
 
         **Authorization:**
-        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
-
-        **Path Variables:**
-        - `project_id`: The unique identifier of the project to retrieve details for.
-
-        **Example:**
-        Get the details of the project with the ID "a45d068695514ffe8680b1d8a342ea3d".
+        To use this API, you need to provide a vserviced access token in the request header using the Bearer authentication method.
 
         **Response:**
         Returns the details of the project in JSON format, including the project name, description, and ID.
+
+      parameters:
+        - name: project_id
+          in: path
+          description: The unique identifier of the project to retrieve details for.
+          required: true
+          type: string
 
       responses:
         "200":
@@ -243,7 +249,6 @@ paths:
           description: Unauthorized
       tags:
         - Project
-
   /service/projects/:
     get:
       summary: Get all user projects
@@ -251,7 +256,7 @@ paths:
         This API allows you to retrieve the details of all user projects, making it easier for your teammates to access and manage projects. This endpoint returns a list of all projects associated with the user.
 
         **Authorization:**
-        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
+        To use this API, you need to provide a vserviced access token in the request header using the Bearer authentication method.
 
         **Example:**
         Get all user projects.
@@ -284,7 +289,7 @@ paths:
         This API allows you to create a new project that belongs to the current user. You need to provide the project name and description in the request body.
 
         **Authorization:**
-        To use this API, you need to provide a valid access token in the request header using the Bearer authentication method.
+        To use this API, you need to provide a vserviced access token in the request header using the Bearer authentication method.
 
         **Note:**
         The created project will be associated with the current user who is authenticated.
@@ -664,25 +669,22 @@ paths:
                             hourly:
                               type: integer
 
+
   /service/vm/operation/:
     post:
       summary: Perform operation on a virtual machine instance
       description: Perform an operation on a virtual machine instance.
       tags:
         - Virtual Machine
-      # security:
-      #   - Bearer Token: []
       parameters:
         - in: query
           name: project_id
-          schema:
-            type: string
+          type: string
           required: true
           description: The unique identifier of the project.
         - in: query
           name: virtual_machine_id
-          schema:
-            type: string
+          type: string
           required: true
           description: The unique identifier of the virtual machine instance.
         - in: body
@@ -691,7 +693,7 @@ paths:
             type: object
             properties:
               operation:
-                type: enum
+                type: string
                 description: The operation to perform on the virtual machine.
                 enum:
                   - stop
@@ -712,6 +714,7 @@ paths:
               success:
                 type: boolean
                 description: Indicates if the operation was successful.
+
   /service/vm/console/:
     get:
       summary: Get console URL for a virtual machine instance
@@ -721,16 +724,14 @@ paths:
       security:
         - Bearer Token: []
       parameters:
-        - in: query
-          name: project_id
-          schema:
-            type: string
+        - name: project_id
+          in: query
+          type: string
           required: true
           description: The unique identifier of the project.
-        - in: query
-          name: virtual_machine_id
-          schema:
-            type: string
+        - name: virtual_machine_id
+          in: query
+          type: string
           required: true
           description: The unique identifier of the virtual machine instance.
       responses:
@@ -748,6 +749,7 @@ paths:
                   console_url:
                     type: string
                     description: The URL to access the console.
+
   /service/vm/snap-shot/:
     post:
       summary: Create a snapshot of a virtual machine instance or project.
@@ -756,22 +758,22 @@ paths:
         - Snap-shot
       security:
         - Bearer Token: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                project_id:
-                  type: string
-                  description: The unique identifier of the project.
-                virtual_machine_id:
-                  type: string
-                  description: The unique identifier of the virtual machine instance.
-                name:
-                  type: string
-                  description: The name of the snapshot.
+      parameters:
+        - in: body
+          name: vm
+          required: true
+          schema:
+            type: object
+            properties:
+              project_id:
+                type: string
+                description: The unique identifier of the project.
+              virtual_machine_id:
+                type: string
+                description: The unique identifier of the virtual machine instance.
+              name:
+                type: string
+                description: The name of the snapshot.
       responses:
         "200":
           description: OK
@@ -784,18 +786,16 @@ paths:
       security:
         - Bearer Token: []
       parameters:
-        - name: project_id
-          in: query
+        - in: query
+          name: project_id
           required: true
           description: The unique identifier of the project.
-          schema:
-            type: string
-        - name: virtual_machine_id
-          in: query
+          type: string
+        - in: query
+          name: virtual_machine_id
           required: true
           description: The unique identifier of the virtual machine instance.
-          schema:
-            type: string
+          type: string
       responses:
         "200":
           description: OK
@@ -887,24 +887,21 @@ paths:
           name: project_id
           required: true
           description: ID of the project
-          schema:
-            type: string
+          type: string
         - in: query
           name: virtual_machine_id
           required: false
           description: ID of the virtual machine
-          schema:
-            type: string
+          type: string
         - in: query
           name: name
           required: false
           description: Name of the snapshot
-          schema:
-            type: string
+          type: string
       responses:
         "200":
           description: OK
-
+  
   /api/wallet:
     get:
       tags:
@@ -916,12 +913,12 @@ paths:
           schema:
             type: object
             properties:
-                  address:
-                    type: "string"
-                  owner:
-                    type: "string"
-                  balance:
-                    type: "number"
+              address:
+                type: string
+              owner:
+                type: string
+              balance:
+                type: number
 
   /wallet/wallet-transactions:
     get:
@@ -933,28 +930,24 @@ paths:
           in: query
           description: Type of the transaction (deposit or withdraw)
           required: false
-          schema:
-            type: string
+          type: string
         - name: start_date
           in: query
           description: Start date for the transaction creation date filter (YYYY-MM-DD)
           required: false
-          schema:
-            type: string
+          type: string
           format: date
         - name: end_date
           in: query
           description: End date for the transaction creation date filter (YYYY-MM-DD)
           required: false
-          schema:
-            type: string
+          type: string
           format: date
         - name: order
           in: query
           description: Order of the transactions sorted by creation date (asc or desc)
           required: false
-          schema:
-            type: string
+          type: string
       responses:
         "200":
           description: OK
@@ -979,6 +972,7 @@ paths:
               - amount
               - transaction_type
               - created_at
+
   /wallet/user-requests/:
     get:
       summary: Retrieve user's wallet requests
@@ -1012,31 +1006,35 @@ paths:
                 is_admin_approved:
                   type: boolean
                   description: Indicates whether the wallet request is approved by the admin
+  
+
     post:
       summary: Create a new wallet request
       tags:
         - Wallet
       security:
         - Bearer Token: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user_id:
-                  type: integer
-                  description: The user ID associated with the wallet request
-                amount:
-                  type: number
-                  description: The amount of the wallet request
-                description:
-                  type: string
-                  description: The description of the wallet request
-                photo:
-                  type: string
-                  description: URL to the photo uploaded for the wallet request
+      parameters:
+        - in: query
+          name: user_id
+          type: integer
+          required: true
+          description: The user ID associated with the wallet request
+        - in: query
+          name: amount
+          type: number
+          required: true
+          description: The amount of the wallet request
+        - in: query
+          name: description
+          type: string
+          required: true
+          description: The description of the wallet request
+        - in: query
+          name: photo
+          type: string
+          required: true
+          description: URL to the photo uploaded for the wallet request
       responses:
         "201":
           description: Created
@@ -1062,6 +1060,15 @@ paths:
                 type: boolean
                 description: Indicates whether the wallet request is approved by the admin
 
+
+securityDefinitions:
+  Bearer Token:  # Define your Bearer Token security scheme
+    type: apiKey
+    name: Authorization
+    in: header
+
 tags:
   - name: Authentication
+    description: APIs related to user authentication
+  - name: Wallet
     description: APIs related to user authentication
