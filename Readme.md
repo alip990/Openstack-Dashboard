@@ -41,13 +41,22 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
     cd <project_directory>
     ```
 
+### set .env file
+you should create .env file from .env.example and configure the project.
+
 ### Build and start project
     ```bash
     docker-compose up --build
     ```
 
 
+### create admin user
+    ```bash
+    docker-compose exec wep sh
+    python manage.py createsuperuser
+    ```
 
+## configure openstack
 if you upload and create new image in openstack you should set these meta for that image
 
 متا دیتایی که به image های که در اپن ساخته میشه باید اضافه شوند و image ها باید public باشند.

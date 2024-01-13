@@ -41,6 +41,8 @@ services:
       - ./.env
     depends_on:
       - db
+      - redis
+      - web
     command: celery -A dashboard.celery  beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/home/application
@@ -55,6 +57,9 @@ services:
       - ./.env
     depends_on:
       - db
+      - redis
+      - web
+
     command: celery -A dashboard.celery worker -l debug
     volumes:
       - .:/home/application
