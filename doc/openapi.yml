@@ -143,6 +143,85 @@ paths:
           description: Unauthorized
       tags:
         - Authentication
+  
+  /users/profile/:
+    get:
+      summary: Retrieve user profile
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+              first_name:
+                type: string
+              last_name:
+                type: string
+              email:
+                type: string
+      tags:
+        - Authentication
+
+    put:
+      summary: Update user profile
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: user
+          description: User object
+          required: true
+          schema:
+            type: object
+            properties:
+              first_name:
+                type: string
+              last_name:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              id:
+                type: integer
+              first_name:
+                type: string
+              last_name:
+                type: string
+              email:
+                type: string
+      tags:
+        - Authentication
+
+  /users/change-password/:
+    put:
+      summary: Change user password
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: change_password
+          description: Change password object
+          required: true
+          schema:
+            type: object
+            properties:
+              new_password:
+                type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+      tags:
+        - Authentication
 
   /service/project/{project_id}:
     patch:
