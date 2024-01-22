@@ -5,14 +5,12 @@ from django.db.models.signals import *
 from django.db.models.signals import post_save
 
 
-from rest_framework import serializers
-
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'password']
+        fields = ['id', 'first_name', 'last_name', 'email', 'national_id', 'phone_number']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -36,7 +34,6 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
         instance.save()
         return instance
-
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255)
