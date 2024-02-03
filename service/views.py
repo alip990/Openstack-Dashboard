@@ -282,7 +282,8 @@ class VmView(APIView):
             user.openstack_username, user.openstack_password, project_id)
         if virtual_machine_id:
             vm = get_server_info(session, virtual_machine_id)
-            return JsonResponse({'data': [vm]}, safe=False)
+            data = VMViewSerializer(vm )
+            return Response({'data': [data.data]})
         vms = get_server_list(session)
         data = VMViewSerializer(vms , many=True)
         return Response({'data': data.data})
