@@ -400,11 +400,11 @@ class SecurityGroupsView(APIView):
                 'project_id should be provided in query param')
         user = User.objects.get(email=request.user)
         session = get_user_session(
-            user.openstack_username, user.openstack_password , project_id)
+            user.openstack_username, user.openstack_password , project_id=project_id)
         sg_manager = neutron.SecurityGroupManager(session)
         sg = sg_manager.create(
             name=name, desc=description, project_id=project_id)
-        neutron.security_group_create(session, name=name, desc=description)
+        # neutron.security_group_create(session, name=name, desc=description)
         return JsonResponse({'data': sg.to_dict()}, safe=False)
 
     def delete(self, request):
