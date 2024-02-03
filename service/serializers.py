@@ -5,10 +5,10 @@ from rest_framework import serializers
 from .models import Flavor
 
 class FlavorSerializer(serializers.ModelSerializer):
-    id = serializers.CharField(source='id', read_only=True)
+    id = serializers.CharField( read_only=True)
     cpu = serializers.SerializerMethodField()
     ram = serializers.SerializerMethodField()
-    name = serializers.CharField(source='name')
+    name = serializers.CharField()
     disk = serializers.SerializerMethodField()
     ratings = serializers.SerializerMethodField()
 
