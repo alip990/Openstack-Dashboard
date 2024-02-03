@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-
-from rest_framework import serializers
 from .models import Flavor
 
 class FlavorSerializer(serializers.ModelSerializer):
@@ -35,6 +33,64 @@ class FlavorSerializer(serializers.ModelSerializer):
             "daily": daily_rating,
             "hourly": hourly_rating
         }
+
+
+
+class VMViewSerializer(serializers.Serializer):
+    accessIPv4 = serializers.SerializerMethodField()
+    accessIPv6 = serializers.IPAddressField(read_only=True)
+    addresses = serializers.DictField(read_only=True)
+    created = serializers.DateTimeField(read_only=True)
+    id = serializers.CharField(read_only=True)
+    image = serializers.SerializerMethodField()
+    key_name = serializers.CharField(read_only=True)
+    metadata = serializers.DictField(read_only=True)
+    name = serializers.CharField()
+    networks = serializers.DictField(read_only=True)
+    project_id = serializers.CharField(read_only=True)
+    status = serializers.CharField(read_only=True)
+    hostId = serializers.CharField(read_only=True)
+    flavor = serializers.SerializerMethodField()
+
+    class Meta:
+        fields = ['accessIPv4', 'accessIPv6', 'addresses', 'created', 'id', 'image', 'key_name',
+                  'metadata', 'name', 'networks', 'project_id', 'status', 'hostId', 'flavor']
+
+    def get_image(self, server):
+        return {
+            "id": server['image']['id'],
+            "size": server['image']['size'],
+            "name": server['image']['name'],
+            "min_disk": server['image']['min_disk'],
+            "min_ram": server['image']['min_ram'],
+            "os_distro": server['image']['os_distro'],
+            "os_version": server['image']['os_version'],
+            "os_admin_user": server['image']['os_admin_user'],
+            "created_at": server['image']['created_at'],
+            "photo": server['image']['photo']
+        }
+
+    def get_ipv4_from_networks(self, server):
+        for network_name, addresses in server['addresses'].items():
+            if addresses and isinstance(addresses, list):
+                return addresses[0].get('addr')
+        return None
+
+    def get_flavor(self, server):
+        flavor_name = server['flavor']['name']
+        flavor_instance = Flavor.objects.filter(name=flavor_name).first()
+        
+        if flavor_instance:
+            return FlavorSerializer(flavor_instance).data
+        else:
+            return None
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['accessIPv4'] = self.get_ipv4_from_networks(instance)
+        return ret
+
+
 
 class KeypairSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200)

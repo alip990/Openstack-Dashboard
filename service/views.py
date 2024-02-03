@@ -17,7 +17,7 @@ from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer, Sec
 from users.models import User
 from service.models import VirtualMachineService ,Flavor
 from wallet.models import Wallet
-from service.serializers import FlavorSerializer
+from service.serializers import FlavorSerializer , VMViewSerializer
 LOG = logging.getLogger(__name__)
 
 
@@ -153,7 +153,6 @@ class SnapShotView(APIView):
         session = keystone.get_user_session(
             user.openstack_username, user.openstack_password, project_id)
         snapshot = nova.snapshot_create(session, instance_id=vm_id, name=name)
-        print("snapshot", snapshot)
 
         return JsonResponse({'data': {"id": snapshot}}, safe=False)
 
@@ -285,7 +284,8 @@ class VmView(APIView):
             vm = get_server_info(session, virtual_machine_id)
             return JsonResponse({'data': [vm]}, safe=False)
         vms = get_server_list(session)
-        return JsonResponse({'data': vms}, safe=False)
+        data = VMViewSerializer(vms , many=True)
+        return JsonResponse({'data': data}, safe=False)
 
 
 class VmOperationView(APIView):
