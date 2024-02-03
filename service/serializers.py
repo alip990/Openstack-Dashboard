@@ -70,7 +70,7 @@ class VMViewSerializer(serializers.Serializer):
             "photo": server['image']['photo']
         }
 
-    def get_ipv4_from_networks(self, server):
+    def get_accessIPv4(self, server):
         for network_name, addresses in server['addresses'].items():
             if addresses and isinstance(addresses, list):
                 return addresses[0].get('addr')
@@ -85,10 +85,6 @@ class VMViewSerializer(serializers.Serializer):
         else:
             return None
 
-    def to_representation(self, instance):
-        ret = super().to_representation(instance)
-        ret['accessIPv4'] = self.get_ipv4_from_networks(instance)
-        return ret
 
 
 
