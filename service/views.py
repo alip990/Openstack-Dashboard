@@ -176,10 +176,14 @@ class FlavorView(APIView):
     # permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # user = User.objects.get(email=request.user)
-        session = get_admin_session()
-        flavors = get_flavor_list(session)
-        LOG.debug('flavors', flavors)
+        # Retrieve non-deleted flavors from the database using the Flavor model
+        flavors = Flavor.objects.filter(is_deleted=False)
+
+        # Serialize the flavors using FlavorSerializer
+        serializer = FlavorSerializer(flavors, many=True)
+        
+        # Return the serialized data as JSON response
+        return Response({'data': serializer.data})
 
         return JsonResponse({'data': flavors}, safe=False)
 
