@@ -285,7 +285,7 @@ class VmView(APIView):
             return JsonResponse({'data': [vm]}, safe=False)
         vms = get_server_list(session)
         data = VMViewSerializer(vms , many=True)
-        return Response({'data': data}, safe=False)
+        return Response({'data': data})
 
 
 class VmOperationView(APIView):
