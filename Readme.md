@@ -96,6 +96,20 @@ you should create .env file from .env.example and configure the project.
     ```
 
 ## configure openstack
+### adding new image to openstack
+This repose is alpine image for openstack here I use it for test. 
+https://github.com/antoinemartin/alpine-openstack-vm
+
+first download image from github
+```console
+wget https://github.com/antoinemartin/alpine-openstack-vm/releases/download/latest/alpine-openstack.qcow2
+```
+Then create that image in openstack
+
+```console 
+microstack.openstack  image create --disk-format qcow2 --file alpine-openstack.qcow2 alpine-openstack
+```
+### Add image metadata
 if you upload and create new image in openstack you should set these meta for that image
 
 متا دیتایی که به image های که در اپن ساخته میشه باید اضافه شوند و image ها باید public باشند.
@@ -105,12 +119,12 @@ photo,
 Os_version,
 
 ```console
-openstack image set \
+microstack.openstack image set \
     --property os_distro=scsi \
     --property os_version=ide \
     --property photo=https://cdn.freebiesupply.com/logos/large/2x/ubuntu-4-logo-png-transparent.png \
     --property os_admin_user=alireza \
-    cirros
+    alpine-openstack
 ```
 
 I use microstack to develop the app,
@@ -120,3 +134,5 @@ I use microstack to develop the app,
 ```console
 sudo snap get microstack config.credentials.keystone-password
 ```
+
+

@@ -161,6 +161,12 @@ paths:
                 type: string
               email:
                 type: string
+              national_id:
+                type: string
+              phone_number:
+                type: string
+
+
       tags:
         - Authentication
 
@@ -180,6 +186,11 @@ paths:
                 type: string
               last_name:
                 type: string
+              national_id:
+                type: string
+              phone_number:
+                type: string
+
       responses:
         "200":
           description: OK
@@ -194,6 +205,11 @@ paths:
                 type: string
               email:
                 type: string
+              national_id:
+                type: string
+              phone_number:
+                type: string
+
       tags:
         - Authentication
 
