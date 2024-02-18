@@ -28,8 +28,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    # volumes:
-    #   - .:/home/application
+    volumes:
+      - .:/home/application
     networks:
       - backend
     depends_on:
@@ -89,6 +89,8 @@ services:
 
 volumes:
   data:
+    external: true
+
 
 networks:
   backend:
