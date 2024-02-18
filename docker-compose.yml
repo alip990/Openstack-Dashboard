@@ -89,7 +89,6 @@ services:
 
 volumes:
   data:
-    external: true
 
 
 networks:
