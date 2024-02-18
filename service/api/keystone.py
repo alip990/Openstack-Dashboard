@@ -111,7 +111,7 @@ def create_project(name: str, username: str, description: str, password: str):
             role.id,
             user=user.id,
             project=project.id)
-        LOG.debug('Project:'+name+' Created user:'+username)
+        LOG.debug('Project:Created user:')
         session = get_user_session(
             username, password, project.id)
 
