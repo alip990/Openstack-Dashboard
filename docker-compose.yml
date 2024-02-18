@@ -12,7 +12,7 @@ services:
     ports:
       - "5434:5432"
     volumes:
-      - "postgresqlData:/var/lib/postgresql/data"
+      - "data:/var/lib/postgresql/data"
     networks:
       - backend
     restart: always
@@ -28,8 +28,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - .:/home/application
+    # volumes:
+    #   - .:/home/application
     networks:
       - backend
     depends_on:
@@ -48,8 +48,8 @@ services:
       - redis
       - web
     command: celery -A dashboard.celery  beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - .:/home/application
+    # volumes:
+    #   - .:/home/application
     networks:
       - backend
 
@@ -65,8 +65,8 @@ services:
       - redis
       - web
     command: celery -A dashboard.celery worker -l debug
-    volumes:
-      - .:/home/application
+    # volumes:
+    #   - .:/home/application
     networks:
       - backend
 
@@ -88,7 +88,7 @@ services:
 
 
 volumes:
-  postgresqlData:
+  data:
 
 networks:
   backend:
