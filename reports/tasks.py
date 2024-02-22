@@ -13,7 +13,7 @@ from wallet.models import Wallet
 LOG = logging.getLogger(__name__)
 
 
-@app.on_after_finalize.connect()
+@app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     
     schedule, created = CrontabSchedule.objects.get_or_create(
@@ -62,7 +62,7 @@ def setup_periodic_tasks(sender, **kwargs):
 
 
 
-@app.task()
+@app.task
 def generate_user_invoices():
   generate_all_users_invoice_within_month()
 
@@ -70,7 +70,7 @@ def generate_user_invoices():
 
 
 
-@app.task()
+@app.task
 def process_expired_invoices():
     current_time = timezone.now()
     expired_invoices = Invoice.objects.filter(payment_deadline__lt=current_time, paid_date__isnull=True)
