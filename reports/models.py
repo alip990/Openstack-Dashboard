@@ -41,7 +41,7 @@ class Invoice(BaseCreatedUpdatedTime):
     payment_deadline = models.DateTimeField(
         null=True, blank=True, verbose_name=_('مهلت پرداخت')
     )
-    paid_date  = models.DateTimeField(null = True , verbose_name = _("تاریخ پرداخت"))
+    paid_date  = models.DateTimeField(null = True ,blank = True, verbose_name = _("تاریخ پرداخت"))
 
     def __str__(self):
         return f"فاکتور #{self.id} - کاربر: {self.user}"
