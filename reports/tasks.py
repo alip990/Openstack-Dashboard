@@ -45,9 +45,9 @@ def setup_periodic_tasks(sender, **kwargs):
 )
 
     invoice_periodic_task, created = PeriodicTask.objects.get_or_create(
-        name="generate_all_users_invoice_within_month",
+        name="process_expired_invoices",
         crontab = invoice_schedule, 
-        task = 'reports.tasks.generate_user_invoices',)
+        task = 'reports.tasks.process_expired_invoices',)
 
     # sender.add_periodic_task(
     #     crontab(hour=7, minute=30, day_of_week=1),
