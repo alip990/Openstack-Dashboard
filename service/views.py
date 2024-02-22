@@ -2,7 +2,8 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework.serializers import ValidationError 
 import logging
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import  APIException , PermissionDenied
+from rest_framework import status
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -239,7 +240,7 @@ class VmView(APIView):
             user = User.objects.get(email=request.user)
             user_wallet= Wallet.objects.get(owner = user.id)
             if(user_wallet.balance <= 0):
-                raise APIException("Your wallet balance is not enough, contact supports")
+                raise PermissionDenied("Your wallet balance is not enough, contact supports")
 
             session = get_user_session(
                 user.openstack_username,
@@ -357,7 +358,7 @@ class VmConsoleView(APIView):
             return JsonResponse({"data": {"con_type": con_type, "console_url": console_url}}, safe=False)
 
         except Exception as e:
-            raise APIException('Console is not available for this machine')
+            raise APIException('Console is not available for this machine' ,status.HTTP_501_NOT_IMPLEMENTED )
 
 
 class VmSecurityGroupView(APIView):
