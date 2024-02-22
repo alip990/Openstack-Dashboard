@@ -43,17 +43,15 @@ class Wallet(models.Model):
 
     @atomic
     def reduce_from_balance(self, amount, description: str = None):
-        if amount <= self.balance:
-            self.balance -= amount
-            self.save()
-            WalletTransactions.objects.create(
-                related_wallet=self,
-                amount=amount,
-                transaction_type='withdraw',
-                description=description
-            )
-            return True
-        return False
+        self.balance -= amount
+        self.save()
+        WalletTransactions.objects.create(
+            related_wallet=self,
+            amount=amount,
+            transaction_type='withdraw',
+            description=description
+        )
+        return True
 
     class Meta:
         verbose_name = 'کیف پول'

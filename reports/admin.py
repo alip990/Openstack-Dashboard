@@ -4,12 +4,14 @@ from django.contrib.admin.filters import RelatedOnlyFieldListFilter
 from admin_auto_filters.filters import AutocompleteFilter
 from users.models import User
 from .models import VirtualMachineServiceUsage
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
+from django.contrib import messages
 
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 from admin_numeric_filter.admin import RangeNumericFilter
-
+from wallet.models import Wallet, WalletTransactions
 User = get_user_model()
 
 
@@ -48,6 +50,34 @@ class InvoiceAdmin(admin.ModelAdmin):
         ('total_amount', RangeNumericFilter),
     ]
     inlines = [InvoiceRecordInline]
+    
+    actions = ['pay_invoices']
+
+    def pay_invoices(self, request, queryset):
+        for invoice in queryset:
+            # Check if the invoice is already paid
+            if invoice.paid_date:
+                messages.warning(request, f"فاکتور #{invoice.id} در حال حاضر پرداخت شده است.")
+                continue
+
+            # Retrieve the user's wallet
+            user_wallet = Wallet.objects.get(owner=invoice.user)
+
+            # Check if the user has enough balance
+            if user_wallet.balance < invoice.total_amount:
+                messages.error(request, f"اعتبار کافی برای پرداخت فاکتور #{invoice.id} وجود ندارد.")
+                continue
+
+            # Reduce the amount from the user's wallet
+            user_wallet.reduce_from_balance(invoice.total_amount, f"پرداخت برای فاکتور #{invoice.id}")
+
+            # Update the invoice paid_date to the current time
+            invoice.paid_date = timezone.now()
+            invoice.save()
+
+            messages.success(request, f"فاکتور #{invoice.id} با موفقیت پرداخت شد.")
+
+    pay_invoices.short_description = "پرداخت فاکتورهای انتخاب شده"
 
 @admin.register(InvoiceRecord)
 class InvoiceRecordAdmin(admin.ModelAdmin):
