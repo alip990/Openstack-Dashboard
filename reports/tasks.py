@@ -23,18 +23,20 @@ def setup_periodic_tasks(sender, **kwargs):
     day_of_month='*',  # Day of the month (1 - 31)
     month_of_year='*',  # Month (1 - 12)
 )
+    LOG.debug(f"Schedule Created  {schedule.__str__()}.")
 
     periodic_task, created = PeriodicTask.objects.get_or_create(
         name="generate_all_users_invoice_within_month",
         crontab = schedule, 
-        task = 'reports.tasks.generate_user_invoices',
-        
+        task = 'reports.tasks.generate_user_invoices',)
+    LOG.debug(f"generate_all_users_invoice_within_month task Created  {periodic_task.__str__()}.")
+    
         # defaults={
         #     'task': 'reports.tasks.generate_user_invoices',  
         #     'crontab': schedule,
         #     "args":{},
         # }
-    )
+    
 
     invoice_schedule, created = CrontabSchedule.objects.get_or_create(
     minute='2',      # Minute (0 - 59)
@@ -43,11 +45,13 @@ def setup_periodic_tasks(sender, **kwargs):
     day_of_month='*',  # Day of the month (1 - 31)
     month_of_year='*',  # Month (1 - 12)
 )
+    LOG.debug(f"Invoice Schedule Created  {invoice_schedule.__str__()}.")
 
     invoice_periodic_task, created = PeriodicTask.objects.get_or_create(
         name="process_expired_invoices",
         crontab = invoice_schedule, 
         task = 'reports.tasks.process_expired_invoices',)
+    LOG.debug(f"process_expired_invoices task Created  {invoice_periodic_task.__str__()}.")
 
     # sender.add_periodic_task(
     #     crontab(hour=7, minute=30, day_of_week=1),
