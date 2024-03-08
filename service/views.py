@@ -304,6 +304,8 @@ class VmView(APIView):
             vm = get_server_info(session, virtual_machine_id)
             data = VMViewSerializer(vm)
             server_delete(vm.id)
+            return Response({'data': data.data})
+
         raise ValidationError(
             'virtual_machine_id should be provided in query param')
 
