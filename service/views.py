@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 from django.shortcuts import render
-from rest_framework.serializers import ValidationError 
+from rest_framework.serializers import ValidationError
 import logging
-from rest_framework.exceptions import  APIException , PermissionDenied
+from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework import status
 
 from rest_framework.permissions import IsAuthenticated
@@ -12,13 +12,13 @@ from rest_framework.views import APIView
 from service.api import keystone, nova, neutron, glance
 from .api.keystone import get_user_session, create_project, get_admin_session
 from service.api.glance import get_image_list
-from service.api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info
+from service.api.nova import get_flavor_list, get_keypair_list, create_keypair, create_server, get_server_list, get_server_info, server_delete
 from .serializers import KeypairSerializer, VmSerializer, ProjectSerializer, SecurityGroupRuleSerializer
 # Create your views here.
 from users.models import User
-from service.models import VirtualMachineService ,Flavor
+from service.models import VirtualMachineService, Flavor
 from wallet.models import Wallet
-from service.serializers import FlavorSerializer , VMViewSerializer
+from service.serializers import FlavorSerializer, VMViewSerializer
 LOG = logging.getLogger(__name__)
 
 
@@ -147,9 +147,10 @@ class SnapShotView(APIView):
             raise ValidationError(
                 'you should provide virtual_machine_id in body')
         user = User.objects.get(email=request.user)
-        user_wallet= Wallet.objects.get(owner = user.id)
-        if(user_wallet.balance <= 0):
-                raise ValidationError("Your wallet balance is not enough, contact supports")
+        user_wallet = Wallet.objects.get(owner=user.id)
+        if (user_wallet.balance <= 0):
+            raise ValidationError(
+                "Your wallet balance is not enough, contact supports")
 
         session = keystone.get_user_session(
             user.openstack_username, user.openstack_password, project_id)
@@ -172,6 +173,7 @@ class SnapShotView(APIView):
         glance.image_delete(session, image_id=snapshot_id)
         return JsonResponse({'success': True}, safe=False)
 
+
 class FlavorView(APIView):
     # permission_classes = [IsAuthenticated]
 
@@ -181,7 +183,7 @@ class FlavorView(APIView):
 
         # Serialize the flavors using FlavorSerializer
         serializer = FlavorSerializer(flavors, many=True)
-        
+
         # Return the serialized data as JSON response
         return Response({'data': serializer.data})
 
@@ -194,9 +196,10 @@ class KeypairView(APIView):
     def get(self, request):
         # Retrieve the user based on the request's user email
         user = User.objects.get(email=request.user)
-        
+
         # Get the user's OpenStack session and fetch the keypairs
-        session = get_user_session(user.openstack_username, user.openstack_password)
+        session = get_user_session(
+            user.openstack_username, user.openstack_password)
         keypairs = get_keypair_list(session=session)
 
         # Log the retrieved keypairs for debugging purposes
@@ -214,7 +217,8 @@ class KeypairView(APIView):
             user = User.objects.get(email=request.user)
 
             # Get the user's OpenStack session
-            session = get_user_session(user.openstack_username, user.openstack_password)
+            session = get_user_session(
+                user.openstack_username, user.openstack_password)
 
             # Create a new keypair using the provided data
             keypair = create_keypair(
@@ -238,9 +242,10 @@ class VmView(APIView):
         vm = VmSerializer(data=request.data)
         if vm.is_valid():
             user = User.objects.get(email=request.user)
-            user_wallet= Wallet.objects.get(owner = user.id)
-            if(user_wallet.balance <= 0):
-                raise PermissionDenied("Your wallet balance is not enough, contact supports")
+            user_wallet = Wallet.objects.get(owner=user.id)
+            if (user_wallet.balance <= 0):
+                raise PermissionDenied(
+                    "Your wallet balance is not enough, contact supports")
 
             session = get_user_session(
                 user.openstack_username,
@@ -259,7 +264,6 @@ class VmView(APIView):
                 id=data['flavor_id'], session=session)
             LOG.debug(f'server created for user{request.user.email}')
             LOG.debug(f'flavor{flavor}')
-
 
             VirtualMachineService.objects.create(openstack_id=server.id,
                                                  name=server.name,
@@ -283,11 +287,25 @@ class VmView(APIView):
             user.openstack_username, user.openstack_password, project_id)
         if virtual_machine_id:
             vm = get_server_info(session, virtual_machine_id)
-            data = VMViewSerializer(vm )
+            data = VMViewSerializer(vm)
             return Response({'data': [data.data]})
         vms = get_server_list(session)
-        data = VMViewSerializer(vms , many=True)
+        data = VMViewSerializer(vms, many=True)
         return Response({'data': data.data})
+
+    def delete(self, request, virtual_machine_id=None):
+        user = User.objects.get(email=request.user)
+        project_id = request.GET.get('project_id', None)
+        virtual_machine_id = request.GET.get('virtual_machine_id', None)
+
+        session = get_user_session(
+            user.openstack_username, user.openstack_password, project_id)
+        if virtual_machine_id:
+            vm = get_server_info(session, virtual_machine_id)
+            data = VMViewSerializer(vm)
+            server_delete(vm.id)
+        raise ValidationError(
+            'virtual_machine_id should be provided in query param')
 
 
 class VmOperationView(APIView):
@@ -317,11 +335,12 @@ class VmOperationView(APIView):
             'hard_reboot': lambda r, s: nova.server_reboot(r, s, False),
             'soft_reboot': lambda r, s: nova.server_reboot(r, s, True),
         }
-        if(operation == "start" or operation == "resume" ):
-            user_wallet= Wallet.objects.get(owner = user.id)
-            if(user_wallet.balance <= 0):
-                raise ValidationError("Your wallet balance is not enough, contact supports")
-        
+        if (operation == "start" or operation == "resume"):
+            user_wallet = Wallet.objects.get(owner=user.id)
+            if (user_wallet.balance <= 0):
+                raise ValidationError(
+                    "Your wallet balance is not enough, contact supports")
+
         session = get_user_session(
             user.openstack_username, user.openstack_password, project_id)
         vm = VirtualMachineService.objects.filter(
@@ -358,7 +377,8 @@ class VmConsoleView(APIView):
             return JsonResponse({"data": {"con_type": con_type, "console_url": console_url}}, safe=False)
 
         except Exception as e:
-            raise APIException('Console is not available for this machine' ,status.HTTP_501_NOT_IMPLEMENTED )
+            raise APIException(
+                'Console is not available for this machine', status.HTTP_501_NOT_IMPLEMENTED)
 
 
 class VmSecurityGroupView(APIView):
@@ -406,7 +426,7 @@ class SecurityGroupsView(APIView):
                 'project_id should be provided in query param')
         user = User.objects.get(email=request.user)
         session = get_user_session(
-            user.openstack_username, user.openstack_password , project_id=project_id)
+            user.openstack_username, user.openstack_password, project_id=project_id)
         sg_manager = neutron.SecurityGroupManager(session)
         sg = sg_manager.create(
             name=name, desc=description, project_id=project_id)
