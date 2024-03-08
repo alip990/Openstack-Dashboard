@@ -303,7 +303,7 @@ class VmView(APIView):
         if virtual_machine_id:
             vm = get_server_info(session, virtual_machine_id)
             data = VMViewSerializer(vm)
-            server_delete(vm.id)
+            server_delete(virtual_machine_id)
             return Response({'data': data.data})
 
         raise ValidationError(
